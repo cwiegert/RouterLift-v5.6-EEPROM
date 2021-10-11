@@ -1,0 +1,16 @@
+*************************************************************
+*   Saved settings from the router Memory page.   There will *
+*   be a number of rows and number of sections.   Likely, I  *
+*   will need a pop up in the router screen page to select   *
+*   which bunch of memories I would like to pull into the UI *
+*
+*   The stream is    
+*       delimeter | section | delimeter | index | delimeter | Name | delimeter | inces | delimeter | steps | delimeter  *
+***************************************************************/^
+,#,1,starting POINT,0.2500,-4064,
+,#,2,2nd pass,0.3750,-6096,
+,#,3,7/16 inch,0.4374,-7111,
+,#,4,1/2inch,0.5000,-8128,
+,#,5,,,,
+,#,6,1 inch and fun,1.0000,-16256,
+,#,7,,,,

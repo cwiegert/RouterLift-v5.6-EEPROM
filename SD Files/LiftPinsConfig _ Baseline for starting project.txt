@@ -1,0 +1,21 @@
+/*****************************************************************************
+*   This is the file that configures the pins and the router speed.   The 
+*   delimeter is char(222) which is ascii extended table and the section
+*   identifier is char (174)   the setup will read this file until if find the 
+*   delimeter, then start parsing the streams.  
+*   To keep track of the configuration for the SD card - the pins are as follows
+*   		VCC  -- power
+*		GRD  -- Ground
+*		MISO -- 50 
+*		MOSI -- 51
+*		SCK  -- 52
+*		CS   -- 53
+*   The order of the first line is
+*  Section, TOP_SWITCH, BOTTOM_SWITCH, REZERO, stepPin, SD_WRITE, enablePin, directionPIN
+*
+*   maxMotorSpeed, workingMotorSpeed, stepSize
+********************************************************************************/
+
+Þ®Þ7Þ8Þ2Þ13Þ53Þ6Þ11Þ
+Þ®Þ18000Þ0Þ10Þ
+ŠRouterCory.logŠ
