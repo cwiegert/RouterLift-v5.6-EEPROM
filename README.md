@@ -50,6 +50,12 @@ A configuration file for the number of steps on the stepper motor controller to 
 A configuration file for dynamically displaying error messages in the error popup box.   The popup has a label, yes/no buttons that dynamically display, and a detailed description of the error and remedy to the error
    ### RouterCory.log ### 
 file used to store presets on the memory page.  This filename can be whatever you like it to be and is set on the bottom of the settings screen.   The format of the file is documented in the header.
+  
+  ### Special.TXT ###
+  File for storing all ASCII special characters.   Used this file to find special delimeters when writing the .cfg files.   char(<char #>) i.e. char(122) will give you the delimeter character used in liftPins.cfg.
+  
+  all the other files are for reference and restore of older versions of code.   They are kept here just to test resetting the overall configuration to scratch.   
+
 
 Each of these files are specially delimited and described in the header.    The design has a specific delimiter for parsing the file and knowing exactly what to do with each line.   
 
