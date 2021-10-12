@@ -109,8 +109,8 @@ Wiring the limit switches.   Ground --> common on the switch.   3V --> 10K resis
 8.	Connect all the components together according to your pin configuration in [LiftPinsConfig.CFG.](https://github.com/cwiegert/RouterLift-v5.6-EEPROM/blob/main/SD%20Files/LiftConfig.cfg)   As noted, the SD card must be wired into the Arduino as defined in the header.   If not – you will need to open the code and change the SD card parameter in the Setup function
 9.	Connect the (+) and ground from your stepper motors to the distribution blocks
 10.	Connect and configure your end stops.   It’s hard to define exactly how you are going to do your custom setup, but I have defined my setup above
-11.	Copy LiftPinsConfig.cfg, Heights.txt, Error.cfg and RouterCory.log to a microSD.
-12.	Connect the SD Shield to the Arduino.   The ping config is defined in LiftPinsConfig.cfg header file
+11.	Copy [LiftPinsConfig.CFG](https://github.com/cwiegert/RouterLift-v5.6-EEPROM/blob/main/SD%20Files/LiftConfig.cfg), Heights.txt, Error.cfg and RouterCory.log to a microSD.
+12.	Connect the SD Shield to the Arduino.   The ping config is defined in [LiftPinsConfig.CFG](https://github.com/cwiegert/RouterLift-v5.6-EEPROM/blob/main/SD%20Files/LiftConfig.cfg) header file
 13.	Connect the Nextion HMI.   It’s a simple serial interface.   Black --> Ground, Red --> 12V, RX --> TX on Arduino (pin TX0 or Comms 14) , TX --> RX on Arduino (RX0 or Comms 15)
 14.	Connect the stepper motors to your stepper motor controllers.   Typically, your motors are wired in pairs with the Blue and Red as 1 pair and Black and Green being the other pair.   Here is an example wiring he TB6600 controller.  
 15.	Install the Arduino IDE on the laptop or computer you will use to upload the Arduino code to the Mega2560 Board
