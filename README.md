@@ -106,7 +106,7 @@ Wiring the limit switches.   Ground --> common on the switch.   3V --> 10K resis
 5.	Mount the 5V power – this is used to power the Arduino Mega, and all other 5V accessories.   I only powered the end limit sensors through the Arduino onboard 5V power pins 
 6.	I used a (+) and Ground distribution block instead of wiring to power source directly
 7.	Make the 5V pigtail for the Arduino and wire it in to your distribution blocks.   I used the simple connections from Amazon - 12V power pigtail      Don’t plug the Arduino to power yet, as you will want to have all other connections finished prior to powering the board
-8.	Connect all the components together according to your pin configuration in LiftPinsConfig.CFG.   As noted, the SD card must be wired into the Arduino as defined in the header.   If not – you will need to open the code and change the SD card parameter in the Setup function
+8.	Connect all the components together according to your pin configuration in [LiftPinsConfig.CFG.](https://github.com/cwiegert/RouterLift-v5.6-EEPROM/blob/main/SD%20Files/LiftConfig.cfg)   As noted, the SD card must be wired into the Arduino as defined in the header.   If not – you will need to open the code and change the SD card parameter in the Setup function
 9.	Connect the (+) and ground from your stepper motors to the distribution blocks
 10.	Connect and configure your end stops.   It’s hard to define exactly how you are going to do your custom setup, but I have defined my setup above
 11.	Copy LiftPinsConfig.cfg, Heights.txt, Error.cfg and RouterCory.log to a microSD.
