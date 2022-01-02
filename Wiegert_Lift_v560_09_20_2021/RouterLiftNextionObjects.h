@@ -133,9 +133,9 @@
         NexText     tThickEntry =   NexText (6, 3, "tThickEntry");            // Enter the thickness of the stock to be worked by custom bits
         NexDSButton sw0     =       NexDSButton (6,4, "sw0");                 // decimal or fraction thickness
         NexNumber   nBit    =       NexNumber (6, 22, "nBit");                // field to hold the index of the button pressed
-        NexButton  bLoad   =       NexButton (6, 20, "bLoad");               // calculates the total steps and moves the bit to correct height
         NexText    t3       =       NexText (6, 19, "Bits.t3");
         NexButton   bBitsZero =     NexButton( 6, 23, "bBitsZero");           // move to 0 position on the Bits screen
+        NexButton  bBitsLoad =     NexButton (6, 20, "bBitsLoad");            //  Loading the special bits to the router, move the bit to the caculated height
         
  
 // Any object for which we will have an event handler will need to be listed in the nex_Listen_list array.   The send component ID must be set in the UI on the event
@@ -218,8 +218,8 @@
           &m3,
           &m4,
           &m5,
-          &bLoad,
           &bBitsZero,
+          &bBitsLoad,
           NULL
         };
          

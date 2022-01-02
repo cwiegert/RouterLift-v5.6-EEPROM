@@ -23,10 +23,10 @@
 
         int         TOP_SWITCH = 7;
         int         BOTTOM_SWITCH = 8;
-        int         FRONT_SWITCH = 32;
-        int         BACK_SWITCH = 31;
+        int         FRONT_SWITCH = 31;
+        int         BACK_SWITCH = 29;
         int         REZERO = 2;
-        int         FENCE_ZERO;
+        int         FENCE_ZERO = 32;
                 
         
         

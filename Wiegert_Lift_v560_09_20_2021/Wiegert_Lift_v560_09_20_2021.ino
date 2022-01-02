@@ -495,15 +495,23 @@
         
         int stepsFromDistance(int move_go, int index) {
          
+          int  counter;
           if(move_go)
-            eeAddress = EEPROM[4093];
+            {
+              eeAddress = EEPROM.read(4090);
+              counter = 0;              // called from the automove, looking at heights, 0 based array
+            }
           else
-            eeAddress = EEPROM[4092];  
+            {
+              EEPROM.get (4092, eeAddress);  
+              counter = 1;              // called from custom bits screen, looking at custom bits section, 1 based array
+            }
           do
             {
                EEPROM.get(eeAddress, preSetLookup);  
                eeAddress += sizeof(preSetLookup);
-            }while ( preSetLookup.index != index);
+               counter += 1;
+            }while ( preSetLookup.index != index && counter < index + 1);
                         
           return preSetLookup.steps;
         }
@@ -760,21 +768,20 @@
           while (nexSerial.read() != -1);
           memset (buffer, '\0', sizeof(buffer));
           characters = button.getText(buffer, sizeof(buffer));
-          inches = atof(buffer);  
+          inches = atof(buffer); 
           stepsToMove = calcSteps (inches); 
           while (nexSerial.read() != -1);
           sRouter.move(stepsToMove);
           if (stepsToMove < -sRouter.currentPosition())  // modified 3/7/2020 - because of storing + positions when bit above table
-           {
-            sRouter.setSpeed(workingMotorSpeed);
-            direct = UP;
-           }
-                
+            {
+              sRouter.setSpeed(workingMotorSpeed);
+              direct = UP;
+            }              
           else
-          {
-            sRouter.setSpeed (-workingMotorSpeed);
-            direct = DOWN;
-          }
+            {
+              sRouter.setSpeed (-workingMotorSpeed);
+              direct = DOWN;
+            }
 /* debugLn("about to call ErrorDialog(200)");
          ErrorDialog(200);
          if (lowLimit == 0)
@@ -805,38 +812,44 @@
         }
         
 /********************************************************************
- *    void bCustBitPopCallback (void *ptr)
+ *    void bCustBitPushCallback (void *ptr)
  *        used on the Bits screen to lift the bit to the right height 
  *        likely will call either LoadMemorytoRouter or bAutoCallBack (from the presets)
  *        Needs to calculate steps from thickness (1/2 thickness entered + bit center)
  ************************************************************************/
-       void bCustBitPopCallback (void *ptr){
+    void bCustBitPushCallback (void *ptr){
             
-          char  thickness[16];
-          int   fraction;
-          float  inches;
-          uint32_t   decimal;
-          char   sCommand[80];
-          char  newThick[16];
-          char   buffer[31];
+      char  thickness[16];
+      int   fraction;
+      float  inches;
+      uint32_t   decimal;
+      char   sCommand[80];
+      char  newThick[16];
+      char   buffer[31];
 
-          memset (thickness, '\0', sizeof(thickness));
-          tThickEntry.getText(thickness, sizeof(thickness));
-          sw0.getValue(&decimal);
-          fraction = decimal;
-          if (fraction == 0)
-            {
-              inches = (atof(thickness)/2) + preSetLookup.decimal;
-              dtostrf(inches, 3, 4, newThick);
-              sprintf(sCommand, "t3.txt=\"%s\"",newThick);
-              nexSerial.write(sCommand);
-              FlushBuffer();
-            memset (buffer, '\0', sizeof(buffer));
-              fraction =t3.getText(buffer, sizeof(buffer));
-            }
+      memset (thickness, '\0', sizeof(thickness));
+      tThickEntry.getText(thickness, sizeof(thickness));
+      sw0.getValue(&decimal);
+      fraction = decimal;
+
+      if (fraction == 0)
+        {
+          Serial.println(preSetLookup.decimal);
+          inches = (atof(thickness)/2) + preSetLookup.decimal;
+          dtostrf(inches, 3, 4, newThick);
+          sprintf(sCommand, "t3.txt=\"%s\"",newThick);
+          nexSerial.write(sCommand);
+          FlushBuffer();
+          memset (buffer, '\0', sizeof(buffer));
+          fraction =t3.getText(buffer, sizeof(buffer));
+        } 
+      loadMemorytoRouter (t3, LOW); 
+      memset (buffer, '\0', sizeof(buffer));
+      sprintf(sCommand, "t1.txt=\"%s\"", preSetLookup.label);
+      nexSerial.write(sCommand);
+      FlushBuffer();
           
-          loadMemorytoRouter (t3, LOW);
-       }
+    }
       
 /*************************************************
     void  memToFileSD(  NexText &Desc, NexText &Value, NexText &Steps)
@@ -1984,19 +1997,10 @@
   10_10_2021 -->  EEPROM used for storing the settings and file writing is turned off
 **************************/
         
-        void bSetPinsPopCallback (void *ptr) {
-          /*SdBaseFile   fPins;
-          char          fileName[20] = "LiftPinsConfig.cfg";
-          char          pinsString[25] = {'\0'};
-          char          motorString[25] = {'\0'};
-          char          verString[25] = {'\0'};
-          char          delim = char(222);
-          char          section = char(174);
-          char          verDelim = char(131);
-          char          checker;
-          char          verField[30] = {'\0'};*/
-        
+  /*      void bSetPinsPopCallback (void *ptr) {
+          
           eeAddress = 0;
+          
           EEPROM.put (eeAddress, directionPin);
           eeAddress += sizeof(directionPin);
           EEPROM.put(eeAddress, fenceDirPin);
@@ -2039,43 +2043,14 @@
           eeAddress += sizeof(workingMotorSpeed);
           EEPROM.put (eeAddress, ver);
           eeAddress += sizeof(ver);
-          if ((EEPROM[boardMemory - 1] < eeAddress) || EEPROM[boardMemory - 1] == 255)
-            {
-              EEPROM[boardMemory - 1] = eeAddress;
-              
-            } 
-          EEPROM[boardMemory -3] = 100;
-          
-       /*   fPins.open(fileName, O_RDWR);
-          fPins.seekSet(0);
-        
-        
-          checker = fPins.read();
-          while (checker != delim && fPins.available())
-            checker = fPins.read();
-          // section, delim, UP, delim, down, delim, zero, delim, step, delim, SD, delim, enable, delim, direction, delim \n
-          sprintf(pinsString, "%c%c%d%c%d%c%d%c%d%c%d%c%d%c%d%c\n", section, delim,
-                  TOP_SWITCH, delim, BOTTOM_SWITCH, delim, REZERO, delim,
-                  stepPin, delim, SD_WRITE, delim, enablePin, delim,
-                  directionPin, delim );
-          sprintf(motorString, "%c%c%ld%c%ld%c%d%c\n", section, delim,
-                  maxMotorSpeed, delim, workingMotorSpeed, delim, stepSize, delim);
-          memset (verField, '\0', sizeof(verField));
-          tVersion.getText(verField, sizeof(verField));
-          sprintf(verString, "%c%s%s", verDelim, verField, verDelim);
-          fPins.write(pinsString);
-          fPins.write(motorString);
-          /*       checker=0;                 // I used this section when initially writing section to file
-                 while (checker != -1)
-                 {
-                   checker = fPins.read();
-            Serial.print(checker);
-                 }
-                 fPins.write(verString);
-          fPins.sync();
-          fPins.close();*/
+          nTemp = EEPROM[4094];
+            if ((nTemp < eeAddress) || nTemp == 255)
+              {
+                eeAddress +=5;
+                EEPROM.put (4094, eeAddress); 
+              } 
         }
-        
+        */
 /***********************************************
     void  bSetMotorPopCallback (void *ptr)
         function to set the motor working speeds from  the settings screen in the app
@@ -2345,8 +2320,11 @@
 
             nBit.getValue(&save);
             index = save;
+    Serial.print ("value of index after button pushed == ");
+    Serial.println(index);
             stepsFromDistance (LOW, index);
-
+Serial.print ("label after stepsFromDistance = ");
+Serial.println(preSetLookup.label);
             sprintf( sCommand, "t2.txt=\"%s\"",preSetLookup.label);
             nexSerial.write(sCommand);
             FlushBuffer(); 
@@ -2391,7 +2369,7 @@
             nexInit(115200);     //  with enahanced libraries, can pass a baud rate to the Nextion (115200 set on preinitialize of Home)
             //nexBAUD(250000);
 
-            Serial.begin(250000);
+            Serial.begin(500000);
             // Register the pop event callback function of the components
             
             btPower.attachPop(btPowerPopCallback, &btPower);                    //  turn the motor controller on and off by setting the enablePin
@@ -2445,7 +2423,7 @@
             nSpd6.attachPop(nSpdPopCallback, &nSpd6);                           //  60 on the scale next to the slider.   will set motor to 60% of MAXSPEED
             nSpd8.attachPop(nSpdPopCallback, &nSpd8);                           //  80 on the scale next to the slider.   will set motor to 80% of MAXSPEED
             nSpd10.attachPop(nSpdPopCallback, &nSpd10);                         //  100 on the scale next to the slider.   will set motor to 100% of MAXSPEED
-            bSetPins.attachPop(bSetPinsPopCallback, &bSetPins);                 //  set the new pins for the connections for overall digital configuration
+//            bSetPins.attachPop(bSetPinsPopCallback, &bSetPins);                 //  set the new pins for the connections for overall digital configuration
             bSetMotor.attachPop(bSetMotorPopCallback, &bSetMotor);              //  Set the speeds and step variables for the motor
             bSaveFile.attachPop(bSaveFilePopCallback, &bSaveFile);              //  resets the momory save file name, and writes new file name to pinsconfig.cfg
             bMemZero.attachPop(bgotoZeroPopCallback, &bMemZero);                //  calls the home screen gotoZero event handler.  drops the router to the 0 position
@@ -2497,138 +2475,17 @@
             m3.attachPop (mCustomBitPopCallback, &m3);
             m4.attachPop (mCustomBitPopCallback, &m4);
             m5.attachPop (mCustomBitPopCallback, &m5);
-            bLoad.attachPop (bCustBitPopCallback, &bLoad);
             bBitsZero.attachPop (bgotoZeroPopCallback, &bBitsZero);
+            bBitsLoad.attachPush (bCustBitPushCallback, &bBitsLoad);
             
-    //         pinMode(SD_WRITE, OUTPUT);
+           pinMode(SD_WRITE, OUTPUT);
             
-            /**********************************************************
-             *     This entire section should be a function, and the 
-             *     function needs to be rw-written to read from EEPROM
-             *     instead of a file.   We can keep the code in a library
-             *     to recall when necessary, but no need to have the header
-             *     section, rather the EEPROM_ROUTER setup file should have all
-             *     the documentation necessary to figure out how to set the pin configuration
-             * *********************************************************/
+            
           if (!sdCard.begin(SD_WRITE))
                 ErrorDialog (101);  
-   /*         else
-            {
-                if (fPins.open(fileName))
-                {
-                memset (pinsString, '\0', sizeof(pinsString));
-                memset (motorString, '\0', sizeof(motorString));
-                checker = fPins.read();
-                while (checker != delimCheck)
-                {
-                    checker = fPins.read();
-                }
-                checker = fPins.read();
-                index = 0;
-                while (checker != '\n' && fPins.available())
-                {
-                    pinsString[index] = checker;
-                    index++;
-                    checker = fPins.read();
-                }
 
-                index = 0;
-                checker = fPins.read();
-                while (checker != '\n' && fPins.available())
-                {
-                    motorString[index] = checker;
-                    index++;
-                    checker = fPins.read();
-                }
-                if (fPins.available())
-                    numChars = fPins.fgets(memFile, sizeof(memFile));       // read the filename to be used for storing custom router depths
-                int roll = 1;
-                memset(storeFile, '\0', sizeof(storeFile));
-                while (roll < numChars - 2)
-                {
-                    storeFile[roll - 1] = memFile[roll];
-                    roll++;
-                }
-            
-                token = strtok(pinsString, delim);
-            
-                for (index = 0; index < 13; index++)
-                {
-                    token = strtok(NULL, delim);
-                    switch (index)
-                    {
-                    case 0:
-                        TOP_SWITCH = atoi(token);
-                        break;
-                    case 1:
-                        BOTTOM_SWITCH = atoi(token);
-                        break;
-                    case 2:
-                        REZERO = atoi(token);
-                        break;
-                    case 3:
-                        stepPin = atoi(token);
-                        break;
-                    case 4:
-                        break;
-                    case 5:
-                        enablePin = atoi(token);
-                        break;
-                    case 6:
-                        directionPin = atoi(token);
-                        break;
-                    case 7:
-                        fenceStepPin = atoi(token);
-                        break;
-                    case 8:
-                        fenceEnablePin = atoi(token);
-                        break;
-                    case 9:
-                        fenceDirPin = atoi(token);
-                        break;
-                    case 10:
-                        BACK_SWITCH = atoi(token);
-                        break;
-                    case 11:
-                        FRONT_SWITCH = atoi(token);
-                        break;
-                    case 12:
-                        FENCE_ZERO = atoi(token);
-                        break;
-                    }
-                }
-                token = strtok(motorString, delim);
-                for (index = 0; index < 3; index++)
-                {
-                    token = strtok(NULL, delim);
+            readSettingsEEPROM();         // read the config from EEPROM 
 
-                    switch (index)
-                    {
-                    case 0:
-                        maxMotorSpeed = atol(token);
-                        break;
-                    case 1:
-                        workingMotorSpeed = atol(token);
-                        break;
-                    case 2:
-                        stepSize = atoi(token);
-                        break;
-                    }
-                }
-                memset( pinsString, '\0', sizeof(pinsString));
-                index=0;
-                while (fPins.read() != 131);
-                while (fPins.peek() != 131)
-                    {
-                    pinsString[index] = fPins.read();
-                    index++;
-                    }
-                fPins.close();
-                }
-                else
-                ErrorDialog ( 105 ); 
-    */
-            readSettingsEEPROM();
             pinMode(TOP_SWITCH, INPUT_PULLUP);          // Pin where the stop switch is wired PULLUP will define https://www.arduino.cc/en/Tutorial/InputPullupSerial
             pinMode(BOTTOM_SWITCH, INPUT_PULLUP);
             pinMode(REZERO, INPUT_PULLUP);
@@ -2671,11 +2528,7 @@
  *          main loop of the program
  ***********************************************/
         void loop(void) {
-          /*
-             When a pop or push event occured every time,
-
-             the corresponding component[right page id and component id] in touch event list will be asked.
-          */ 
+          
           nexLoop(nex_listen_list);
 
     /******************

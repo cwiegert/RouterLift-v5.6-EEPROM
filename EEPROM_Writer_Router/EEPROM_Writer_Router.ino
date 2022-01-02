@@ -51,9 +51,10 @@
    Serial.println("clearing the EEPROM");
     for (int x = 0; x< boardSize; x++)
       {
-        if (x == lastx + 80)
+        if (x == lastx + 128)
           {
-            Serial.println(".");
+            Serial.print(".  Address = ");
+            Serial.println(x);
    //         Serial.println("Clearing EEPROM.");
             lastx = x;
           }
@@ -100,6 +101,7 @@ int loadHeightsFromFile(int move_go) {
           Serial.print("Writing heights to the EEPROM.");
           while (fSeek.available())
             {
+              preSetLookup.index = -1;
               fSeek.fgets(fileLine, sizeof(fileLine));
               if (fileLine[0] == '*')
                 {
@@ -131,9 +133,12 @@ int loadHeightsFromFile(int move_go) {
                         break;
                     }
                   }
-                EEPROM.put(eeAddress, preSetLookup);
-                Serial.print(".");
-                eeAddress += sizeof(preSetLookup);
+                if (preSetLookup.index > -1)
+                {
+                  EEPROM.put(eeAddress, preSetLookup);
+                  Serial.print(".");
+                  eeAddress += sizeof(preSetLookup);
+                }
  
    /*           if (move_go == HIGH)
                 { 
@@ -151,11 +156,11 @@ int loadHeightsFromFile(int move_go) {
           fSeek.close();
           Serial.println("");
           Serial.println("Finished writing Heights to EEPROM");
-          return eeAddress;
+          return ;
         }
 
 void setup() {
- Serial.begin(250000);
+ Serial.begin(500000);
   delay (1000);
 
    pinMode(SD_WRITE, OUTPUT);       // define the SD card writing pin
@@ -168,86 +173,44 @@ void setup() {
 /*   add section here to take input from the Serial interface and dedide if the memory should be cleared*/
 
   
- /*if (EEPROM[boardMemory - 1] == 255)
-    {
-      Serial.println("going to write a bunch of data to the EEPROM, the filled byte indicates it hasn't been written");
-      EEPROM.put (eeAddress, directionPin);
-      eeAddress += sizeof(byte);
-      EEPROM.put(eeAddress, fenceDirPin);
-      eeAddress += sizeof(byte);
-      EEPROM.put(eeAddress, stepPin);
-      eeAddress += sizeof(byte);
-      EEPROM.put(eeAddress, fenceStepPin);
-      eeAddress += sizeof(byte);
-      EEPROM.put(eeAddress, enablePin);
-      eeAddress += sizeof(byte);
-      EEPROM.put(eeAddress, fenceEnablePin);
-      eeAddress += sizeof(byte);
-      EEPROM.put(eeAddress, initSpeed);
-      eeAddress += sizeof(float);
-      EEPROM.put(eeAddress, maxMotorSpeed);
-      eeAddress += sizeof(long);
-      EEPROM.put(eeAddress, workingMotorSpeed);
-      eeAddress += sizeof(float);
-      EEPROM.put(eeAddress, stepsPerRevolution);
-      eeAddress += sizeof(int);
-      EEPROM.put(eeAddress, microPerStep);
-      eeAddress += sizeof(int); 
-      EEPROM.put (eeAddress, distPerStep);
-      eeAddress += sizeof(float);     
-      EEPROM.put(eeAddress, pulseWidthMicros);
-      eeAddress += sizeof(float);
-      EEPROM.put(eeAddress, millisBetweenSteps);
-      EEPROM.put (4095, 1);
-    }
-      initSpeed = 0;
-      EEPROM.get(6, initSpeed);
-      Serial.print("read initSpeed from EEPROM ==> ");
-      Serial.println(initSpeed);
-      eeAddress = 6 + sizeof(initSpeed);
-      maxMotorSpeed = 0;
-      EEPROM.get(eeAddress, maxMotorSpeed);
-      
-      Serial.print ("read maxMotorSpeed from EEPROM ==> ");
-      Serial.println (maxMotorSpeed);
-      eeAddress += sizeof(maxMotorSpeed);
-      workingMotorSpeed = 0;
-      EEPROM.get(eeAddress, workingMotorSpeed);
-      Serial.print ("read workingMotorSpeed from EEPROM ==> ");
-      Serial.println(workingMotorSpeed);
-      Serial.print ("value of end state of EEPROM ==> ");
-      Serial.println(EEPROM.read(4095));
-
-   */
-
+ 
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
   char   serGet;
   int     nTemp = 0;
-  Serial.println("");
-  Serial.println ("enter an <X> if you want to clear the EEPROM");
-  Serial.println("enter an <S> if you want to load the settings to EEPROM");
-  Serial.println("enter an <I> if you want to get the settings from EEPROM");
-  Serial.println("enter an <H> if you what the Heights file loaded");
-  Serial.println("enter an <R> if you want to read the first heights values from EEPROM");
-  Serial.println("    enter an <N> if you want to read the next Heights values");
-  Serial.println("enter <B> if you want to load special bits from the SD");
-  Serial.println ("enter <C> if you want size of structure");
-  Serial.println("enter <L> if you want to see what's in EEPROM");
+  int     customAddy = 3435;
+  int     heightsAddy;
+
+  
+  Serial.println ("\n\n\nIF INTIALIZING THE CARD, EXECUTE THE MENU IN NUMERICAL ORDER");
+  Serial.println ("   heights and custom bit settings can be configured without clearing memory,");
+  Serial.println ("   but only after the settings have been stored in EEPROM");
+  Serial.println("\n\n\n");
+  Serial.println ("enter < 1 > if you want to clear the EEPROM");
+  Serial.println("enter < 2 > if you want to load the settings to EEPROM");
+  Serial.println("enter < 3 > if you want to get the settings from EEPROM");
+  Serial.println("enter < 4 > if you what the Heights file loaded");
+  Serial.println("enter < 5 > if you want to read the first heights values from EEPROM");
+  Serial.println("    enter < N > if you want to read the next Heights values");
+  Serial.println("enter < 6 > if you want to load special bits from the SD");
+  Serial.println("enter < 7 > if you want to REEEAAAD the special bits from EEPROM");
+  Serial.println ("enter < 8 > if you want size of structure");
+  Serial.println("enter < L > if you want to see what's in EEPROM");
+  Serial.println("enter < 9 > to see the next EEPROM address to be written");
 
   while (Serial.available()==0);
   serGet = Serial.read();
   
  switch (serGet)
    {
-      case 'X':
+      case '1':   // Clear all of EEPROM
         {
           clearEEProm(boardMemory);
           break;
         }
-      case 'S':
+      case '2':   // Load settings from a file into EEPROM
         {
             eeAddress = 0;
             Serial.println("");
@@ -294,16 +257,20 @@ void loop() {
             eeAddress += sizeof(workingMotorSpeed);
             EEPROM.put (eeAddress, ver);
             eeAddress += sizeof(ver);
-            nTemp = EEPROM[boardMemory - 1];
+            nTemp = EEPROM[4094];
             if ((nTemp < eeAddress) || nTemp == 255)
               {
-                EEPROM[boardMemory - 1] = eeAddress;
-                
-              } 
-            EEPROM[boardMemory -3] = 100;
+                eeAddress +=5;
+                EEPROM.put (4094, eeAddress); 
+              }
+            Serial.print ("next address to start writing ==> ");
+            Serial.println(eeAddress);
+            EEPROM.write (4090, eeAddress);
+            
+            EEPROM.put (4092, customAddy);
             break;
         }
-      case 'I':
+      case '3':    // Read Settings from EEPROM
         {
           eeAddress = 0;
           EEPROM.get (eeAddress, directionPin);
@@ -348,7 +315,9 @@ void loop() {
           eeAddress += sizeof(workingMotorSpeed);
           EEPROM.get(eeAddress, ver);
           eeAddress+= sizeof(ver);
-  
+          heightsAddy = EEPROM.read (4090);
+          EEPROM.get (4092, customAddy);
+
           Serial.println("_________________________________________________________________________________________________________________________");
           Serial.print ("directionPin ==> ");
           Serial.println(byte(directionPin));
@@ -392,31 +361,78 @@ void loop() {
           Serial.println(workingMotorSpeed);
           Serial.print("version ==> ");
           Serial.println(ver);
+          Serial.print ("eeAddress for start of Heights = ");
+          Serial.println(heightsAddy);
+          Serial.print ("eeAddress for start of custom bits = ");
+          Serial.println(customAddy);
+          
           break;
         }
       
-      case 'H':
+      case '4':       // Load heights from a file
         {
-          eeAddress = EEPROM[boardMemory - 3];
-          loadHeightsFromFile(1);
-          EEPROM[4095] = eeAddress+16;
-          Serial.print (" New start address of the EEPROM ==> ");
+          eeAddress = EEPROM.read (4090);
+          int  keepAddy = eeAddress;
+          //eeAddress += 5;
+          Serial.print ("eeAddress for start of Heights = ");
           Serial.println(eeAddress);
+
+          loadHeightsFromFile(1);
+          if (eeAddress > keepAddy)
+            {
+              eeAddress += 5;
+              EEPROM.put (4094, eeAddress);
+              Serial.print (" New start address of the EEPROM ==> ");
+              Serial.println(eeAddress);
+            }
           break;
         }  
-      case 'B' :
+      case '6' :      // Load custom bits from the config file
         {
-
+          EEPROM.get(4092, eeAddress);
+          int keepAddy = eeAddress;
+          loadHeightsFromFile (LOW);
+          if (eeAddress > keepAddy)
+            {
+              eeAddress +=5;
+              EEPROM.put (4094, eeAddress);
+              Serial.print (" New start address of the EEPROM ==> ");
+              Serial.println(eeAddress);
+            }
           break;
         }
-      case 'C':
+      case '7' :      // Read all custom bits from EEPROM to screen
+        {
+          EEPROM.get(4092, eeAddress);
+          do
+            {          
+              EEPROM.get (eeAddress, preSetLookup);
+              if (preSetLookup.index > 0)
+                {
+                  Serial.print ("Preset Lookup Index = ");
+                  Serial.println(preSetLookup.index);
+                  Serial.print ("preset Label = ");
+                  Serial.println (preSetLookup.label);
+                  Serial.print ("preset inch value = ");
+                  Serial.println(preSetLookup.inches);
+                  Serial.print ("preset decimal value = ");
+                  Serial.println(preSetLookup.decimal, 6);
+                  Serial.print("preset Steps = ");
+                  Serial.println(preSetLookup.steps, 6);
+                  Serial.println("");
+                  eeAddress += sizeof (preSetLookup);
+                }
+            }  while (preSetLookup.index > 0);
+          break;
+        }
+      case '8':       // Show the size of the preset Lookup structure
         {
           Serial.print ("Size of the preset lookup structure ==> ");
           Serial.println(sizeof(preSetLookup));
           Serial.println("");
           break;
         }
-      case 'L':
+      case 'L':       // Show the entire contents of EEPROM in raw form
         for (int x = 0; x< boardMemory; x++)
          {
            Serial.print (x);
@@ -424,10 +440,10 @@ void loop() {
            Serial.println (EEPROM.read(x));
          }
        break;
-      case 'R':
+      case '5':       // Read the first Heights config from EEPROM
         {
          // eeAddress = sizeof(preSetLookup);
-          eeAddress = 100;
+          eeAddress = EEPROM.read(4090);
           EEPROM.get(eeAddress,preSetLookup);
           Serial.println(preSetLookup.index);
           Serial.println(preSetLookup.inches);
@@ -437,16 +453,36 @@ void loop() {
     //      eeAddress += sizeof(preSetLookup);
           break;
         }
-      case 'N':
+      case 'N':       // Read all the remaining heights from EEPROM (change this to a loop....)
         {
-          eeAddress += sizeof(preSetLookup);
-          EEPROM.get(eeAddress,preSetLookup);
-          Serial.println(preSetLookup.index);
-          Serial.println(preSetLookup.inches);
-          Serial.println(preSetLookup.decimal, 6);
-          Serial.println(preSetLookup.steps, 6);
-          Serial.println("");
+          int customBits;
+          EEPROM.get(4092, customBits);
+          do
+            {
+              eeAddress += sizeof(preSetLookup);
+              EEPROM.get(eeAddress,preSetLookup);
+              if (preSetLookup.index > -1)
+                {
+                  Serial.println(preSetLookup.index);
+                  Serial.println(preSetLookup.inches);
+                  Serial.println(preSetLookup.decimal, 6);
+                  Serial.println(preSetLookup.steps, 6);
+                  Serial.println("");
+                }
+            } while (preSetLookup.index > -1);
           break;
+        }
+      case '9':  // Show the next EEPROM address to be written and how many bytes are available
+        {
+          int  availAddy;
+          EEPROM.get (4094, availAddy);
+          Serial.print ("\n\nThe next available address for writing in EEPROM is ==> ");
+          Serial.println(availAddy);
+          Serial.print ("Total avialable EEPROM free space ==> ");
+          Serial.println (4090 - availAddy);  
+
+          break;
+
         }
   
     }
