@@ -102,12 +102,12 @@
         const  PROGMEM byte   fenceDirPin = 28;              // pin that will go to the D+ on the fence stepper controller.   Have to declare here as the stepper is a global class
         const  PROGMEM byte   stepPin = 13;                  // pin that will wire to the P+ (pulse) on the stepper controlloer   have to declare here as the stepper is a global class
         const  PROGMEM byte   fenceStepPin = 30;             // pin that will wire to the P+ (pulse) on the Fence stepper controlloer   have to declare here as the stepper is a global class
-        byte   enablePin;                     //  pin that will wire to the E+ on the stepper controller.   Turns the controller on and off  LOW turns motor on, HIGH turns motor off
-        byte   fenceEnablePin;                //  pin that will wire to the E+ on the fence stepper controller.   Turns the controller on and off  LOW turns motor on, HIGH turns motor off
-        int    initSpeed = 2000;              //  sets the initial speed of the motor.   Don't think we need acceleration in the router, but will find out
-        long   maxMotorSpeed;                 //  as defined - maximum speed motor will run.   Sets the 100% on the speed slider
-        int    maxAcceleration = 6000;        //  maximum number of steps for acceleration
-        long   workingMotorSpeed;             //  active working speed, set by the slider, and will be somewhere between 0 and 100%
+        byte   enablePin;                                    //  pin that will wire to the E+ on the stepper controller.   Turns the controller on and off  LOW turns motor on, HIGH turns motor off
+        byte   fenceEnablePin;                               //  pin that will wire to the E+ on the fence stepper controller.   Turns the controller on and off  LOW turns motor on, HIGH turns motor off
+        int    initSpeed = 2000;                            //  sets the initial speed of the motor.   Don't think we need acceleration in the router, but will find out
+        long   maxMotorSpeed;                               //  as defined - maximum speed motor will run.   Sets the 100% on the speed slider
+        int    maxAcceleration = 6000;                      //  maximum number of steps for acceleration
+        long   workingMotorSpeed;                           //  active working speed, set by the slider, and will be somewhere between 0 and 100%
         const  PROGMEM int    stepsPerRevolution = 1600;     //  number of steps required for 1 revolution of leadscrew
         const  PROGMEM int    microPerStep =   8;            //  number of microSteps.   Set on the TB600 controller by dip switch   Off | On | Off
         const  PROGMEM float  distPerStep = 0.00024606;      //  inches per step with calculated off <microPerStep> = 8
@@ -119,12 +119,13 @@
         byte   SET_MOTOR = 1;                 //  Used on the Settings Screen to tell which motor to use when resetting calibrations
         int    stepSize = 3;                 //  used in the moving of the router to set precision on how large the steps should be for the runToPosition() function
         const  PROGMEM char   CR = '\n';                     //  Carraige return constant, used for the writeDebug function to add a new line at the end of the function
-        String preSetTxt;
+        char   preSetTxt[8];
         int    preSetNum;
         long   lowLimit;                      //  step value when the lower limit switch is hit
         long   highLimit;                     //  step value when the upper limit switch is hit
         double  curPosInch;
-        char    posInch[16] = {'\0'};
+        char    posInch[16] = {'\0'};         //  string to hold inch position for moving router
+        char    curRoutPosInch[16] = {'\0'};  //  string to hold router height in inches.   Used on memory screen
         SdFat   sdCard;                       //  pointer to the SD card reader.   Used in storing config and memory files
         int    bGo = DOWN;                    //  used as a flag to test if the stop button has been pressed.
         char    storeFile[25] = {'\0'};       //  name of file where the memory will be stored

@@ -65,6 +65,10 @@
                                                         a move insted of before the move.   Up function now exactly the same as the down function
                                           v. 5.5.0_0_03_2021
                                     01_03_2021  CDW --   starting the code on the power fence.   Adding ball screw and limit switches, controlling fence with HMI
+                                    02_20_2022  CDW --   modified the setPosition and SaveToMemory functions to account for router position instead of curPos  Needed to fix the settings
+                                                         screen so the router position is set every time instead of getting the fence position if the fence was last button
+                                                         pushed
+                                          v. 5.60_09_20_2021_A
 
 *****************************************************************************************************************************************************************************/
       
@@ -78,6 +82,7 @@
 //        SdFat   sdCard;                       //  pointer to the SD card reader.   Used in storing config and memory files
         AccelStepper  sRouter (AccelStepper::FULL2WIRE, stepPin, directionPin, HIGH);
         AccelStepper  sFence (AccelStepper:: FULL2WIRE, fenceStepPin, fenceDirPin, HIGH);
+        AccelStepper  *sStepper ;
         
         // Declare your Nextion objects - Example (page id = 0, component id = 1, component name = "b0"    Fully qualifying with the screen name
         //  creates ability to use in nexSerial.write commands, without having to go through the libraries)
@@ -496,22 +501,24 @@
         int stepsFromDistance(int move_go, int index) {
          
           int  counter;
+          bool  bContinue =1;
           if(move_go)
             {
-              eeAddress = EEPROM.read(4090);
+              eeAddress = EEPROM.read (4090);
+              //eeAddress = EEPROM.read(4090);
               counter = 0;              // called from the automove, looking at heights, 0 based array
             }
           else
             {
-              EEPROM.get (4092, eeAddress);  
+              eeAddress = EEPROM.read (4092);  
               counter = 1;              // called from custom bits screen, looking at custom bits section, 1 based array
             }
           do
-            {
+            {             
                EEPROM.get(eeAddress, preSetLookup);  
                eeAddress += sizeof(preSetLookup);
                counter += 1;
-            }while ( preSetLookup.index != index && counter < index + 1);
+            } while ( bContinue && counter < index + 1);
                         
           return preSetLookup.steps;
         }
@@ -544,6 +551,8 @@
               memset (buffer, '\0', sizeof(buffer));
               dtostrf(-curPosInch, 3, 4, buffer); 
               dtostrf(-curPosInch, 3, 4, posInch);
+            //v. 5.60_09_20_2021_A
+              dtostrf(-curPosInch, 3, 4, curRoutPosInch);
             }
           else
             strcpy(buffer, "0.00");
@@ -744,8 +753,9 @@
           char zero[30] = {'\0'};
           char steps[30] = {'\0'};
         
+        //v. 5.60_09_20_2021_A
           snprintf(zero, 22, "tZero%d.txt=\"%s\"", memrow, posInch);
-          snprintf(steps, 24, "tMem%dSteps.txt=\"%d\"", memrow, curPos);
+          snprintf(steps, 24, "tMem%dSteps.txt=\"%d\"", memrow, sRouter.currentPosition());
           nexSerial.print(zero);
           FlushBuffer();
           nexSerial.print(steps);
@@ -1265,6 +1275,7 @@
       
         void bForwardPushCallback(void *ptr) {
           int cBuff = -1;
+          sStepper = &sFence;
         
           while (digitalRead(FRONT_SWITCH) == HIGH && cBuff == -1 && bGo)
           {     
@@ -1616,10 +1627,17 @@
           byte        dir;
           byte        gomove;
           float       calcInch;
+          int         selection = 0;
         
           swHow.getValue(&bHow);
           gomove = bHow;
-          StructIndex = stepsFromDistance(HIGH,0);
+
+     /*  CDW  01/23/2022 -- set the 2nd parameter to preSetNum instead of 0.   preSetNum is set when the     
+                            cbPreSets is selected.  preSetNum should be the index of the structure to find and convert 
+                            to steps, and move the motor  */
+
+          
+          StructIndex = stepsFromDistance(HIGH, preSetNum);
           if (gomove == 0 && StructIndex >= 0)
           {
             bgotoZeroPopCallback(&bgotoZero);   // if we are setting an absolute value, go to 0 first, then set the bit height (testing for Fence handled inside)
@@ -1961,7 +1979,8 @@
         
           memset(buffer, '\0', sizeof(buffer));
           tHoldCombo.getText(buffer, sizeof(buffer));
-          preSetTxt = String(buffer);
+          memset (preSetTxt, '\0', sizeof(preSetTxt));
+          strncpy(preSetTxt,buffer, sizeof(preSetTxt)-1);
           memset(buffer, '\0', sizeof(buffer));
           tHolder.getText(buffer, sizeof(buffer));
           preSetNum = atoi(buffer);
