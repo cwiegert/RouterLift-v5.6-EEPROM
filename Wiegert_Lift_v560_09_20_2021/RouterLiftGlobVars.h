@@ -5,7 +5,6 @@
 #define FORWARD 0          // for the fence
 #define SD_WRITE 53
         
-
 #if DEBUG == 1
 #define debug(x) Serial.print (x)
 #define debugLn(x) Serial.println(x)

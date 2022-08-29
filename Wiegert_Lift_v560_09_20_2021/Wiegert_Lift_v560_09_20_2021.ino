@@ -69,6 +69,7 @@
                                                          screen so the router position is set every time instead of getting the fence position if the fence was last button
                                                          pushed
                                           v. 5.60_09_20_2021_A
+                                    08_22_2022  CDW --  Modified the section for looking up custom bits from EEPROM.   the bug was EEPROM.read when it should have been EEPROM.get
 
 *****************************************************************************************************************************************************************************/
       
@@ -504,13 +505,12 @@
           bool  bContinue =1;
           if(move_go)
             {
-              eeAddress = EEPROM.read (4090);
-              //eeAddress = EEPROM.read(4090);
+              EEPROM.get (4090, eeAddress);   // CDW   modifield 08_22_2022, changed from EEPROM.read to EEPROM.get
               counter = 0;              // called from the automove, looking at heights, 0 based array
             }
           else
             {
-              eeAddress = EEPROM.read (4092);  
+              EEPROM.get (4092, eeAddress);    // CDW   modifield 08_22_2022, changed from EEPROM.read to EEPROM.get
               counter = 1;              // called from custom bits screen, looking at custom bits section, 1 based array
             }
           do
@@ -676,7 +676,6 @@
               debug (F("maxAcceleartion ==> "));
               debugLn(maxAcceleration);
               debug(F("distPerStep ==> "));
-              Serial.println(distPerStep,8);
               debug(F("maxMotorSpeed == > "));
               debugLn(maxMotorSpeed);
               debug(F("workingMotorSpeed ==> "));
@@ -842,9 +841,9 @@
       sw0.getValue(&decimal);
       fraction = decimal;
 
-      if (fraction == 0)
+     if (fraction == 0)      
         {
-          Serial.println(preSetLookup.decimal);
+      //    Serial.println(preSetLookup.decimal);
           inches = (atof(thickness)/2) + preSetLookup.decimal;
           dtostrf(inches, 3, 4, newThick);
           sprintf(sCommand, "t3.txt=\"%s\"",newThick);
@@ -2339,11 +2338,7 @@
 
             nBit.getValue(&save);
             index = save;
-    Serial.print ("value of index after button pushed == ");
-    Serial.println(index);
             stepsFromDistance (LOW, index);
-Serial.print ("label after stepsFromDistance = ");
-Serial.println(preSetLookup.label);
             sprintf( sCommand, "t2.txt=\"%s\"",preSetLookup.label);
             nexSerial.write(sCommand);
             FlushBuffer(); 
