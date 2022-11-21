@@ -265,7 +265,7 @@ void loop() {
               }
             Serial.print ("next address to start writing ==> ");
             Serial.println(eeAddress);
-            EEPROM.write (4090, eeAddress);
+            EEPROM.put (4090, eeAddress);
             
             EEPROM.put (4092, customAddy);
             break;
@@ -315,7 +315,7 @@ void loop() {
           eeAddress += sizeof(workingMotorSpeed);
           EEPROM.get(eeAddress, ver);
           eeAddress+= sizeof(ver);
-          heightsAddy = EEPROM.read (4090);
+          EEPROM.get (4090, heightsAddy);
           EEPROM.get (4092, customAddy);
 
           Serial.println("_________________________________________________________________________________________________________________________");
@@ -443,7 +443,7 @@ void loop() {
       case '5':       // Read the first Heights config from EEPROM
         {
          // eeAddress = sizeof(preSetLookup);
-          eeAddress = EEPROM.read(4090);
+          EEPROM.get(4090, eeAddress);
           EEPROM.get(eeAddress,preSetLookup);
           Serial.println(preSetLookup.index);
           Serial.println(preSetLookup.inches);

@@ -7,69 +7,72 @@
 
 
  /*************************************************************************************************************************************
-                                    Wiegert Router Lift
+  Wiegert Router Lift
 
-                                    v.4.4.1_03_15_2020
-                                    3_15_2020
-                                    Cory D. Wiegert
+  v.4.4.1_03_15_2020
+  3_15_2020
+  Cory D. Wiegert
 
-                                    This is a router lift controller where an arduino mega is wired through a tb6600 connected to a nema23 stepper motor
-                                    using a Nextion 7" intelligent HMI
-                                    
-                                    01/23/2020 -- CDW   important to note, the GetVal functions for all the Nextion objects will only work if utilizing
-                                                        the new base class libraries  NexConfig.h, NexHardware.cpp and NexHardware.h downloaded from
-                                                        https://forum.arduino.cc/index.php?topic=620821.0
-                                                        
-                                                        Through testing - any value over 18000 (at 8 mirosteps) starts overdriving the controller and setting the motors out of phase
-                                                        speeds around 450-650 seem to phase switch the motors as well, and shuddering of the lead screw occurs.
+  This is a router lift controller where an arduino mega is wired through a tb6600 connected to a nema23 stepper motor
+  using a Nextion 7" intelligent HMI
+  
+  01/23/2020 -- CDW   important to note, the GetVal functions for all the Nextion objects will only work if utilizing
+                      the new base class libraries  NexConfig.h, NexHardware.cpp and NexHardware.h downloaded from
+                      https://forum.arduino.cc/index.php?topic=620821.0
+                      
+                      Through testing - any value over 18000 (at 8 mirosteps) starts overdriving the controller and setting the motors out of phase
+                      speeds around 450-650 seem to phase switch the motors as well, and shuddering of the lead screw occurs.
 
-                                    01/24/2020 -- CDW   IMPORTANT!!!!! Found out the hard way, if we remove buttons or slide things around in the Nextion IDE, make sure to check the object id's with the
-                                                        NEX<object> definition section.   When the create/remove/move around happens in the IDE, it seems the object ID's are modified,
-                                                        thereby causing the listening service on the arduino to mis-match the objects with the call backs.
-                                                     
-                                                        ALSO -- this may be a grounding problem.  If the Nextion is not grounded correctly, there are unexplainable behaviors
-                                                        the same error is flagged when there is a grounding problem
-                               
-                                    02/12/2020 -- CDW   change the settings screen, putting the pin and variable configuration into the UI
-                                              v2.7
-                                    02/15/2020 -- CDW   Very good complete version finished.   Will call this version 3.0 and will deploy for burn-in test on teh router table.
-                                             v 3.0      put to the router table on 2/17/2020, have the file for the Memory screen set to tokenize it based on the section
-                                    02/21/2020 -- CDW   Error dialog implemented, fixed error logging to the HMI screen
-                                             v 3.13     Deployed to the router lift on 02/22/2020 at 12/30 PM
-                                    02/23/2020 -- CDW   added versioning, fixed a couple small bugs, redployed to router 
-                                            v. 3.14_02_22_2020
-                                    02/23/2020 -- CDW   modified how the pushcallbacks worked for the up and down buttons on settings and memory
-                                            v. 3.15_02_23_2020
-                                    02/23/2020 -- CDW   modified how all the saves, deletes and write to disk work on Memory screen.   Will add goto 0 button
-                                                        on the memory screen as well.   button will lower router after completing mortise cuts
-                                    02/24/2020 -- CDW   refactored some of the inefficient code, change some fo the callbacks to point to same functions
-                                          v. 4.1_02_24_2020
-                                    02/24/2020 -- CDW   refactored the write to file on the Memory screen.  Now, all lines are read to structure, and rewritten
-                                                        no more losing content, or having strange characters bleed into the file.   No change to the UI in the Nextion
-                                                        IDE
-                                          v 4.1.1_02_24_2020
-                                    02/26/2020 -- CDW   Refactored memory file config.   Allowed for an old file to be opened, and not over write the data in that file
-                                          v. 4.2.1_02_26_2020
-                                    02/29/2020  -- CDW  Refactored errors  to read the strings from a file.  Rewrote function ErrorDialog and all ErrorDialog commands
-                                          v 4.3.1_02_29_2020
-                                    03_07_2020 -- CDW   fixed error on memory screen.   change the check to -currentPosition() because we are storing positions above the tabel as 
-                                                        positive #'s
-                                          v.4.3.2_03_07_2020
-                                    03_08_2020 -- CDW   modified the bits screen, have all the custom bit movement configured in HEIGHTS.cfg, and can configure the bits without
-                                                        having to recompile.   Am using the LoadRouterfromMemory function to set the router off the bits screen
-                                          v.4.4.0_03_08_2020
-                                    03_15_2020 -- CDW   added a position field to the Memory screen so we are notified when the router has stopped moving.   Gives us a flag
-                                                        that we have reached the height set in the depth field.
-                                          v.4.4.1_03_15_2020
-                                    09_19_2020  CDW -- line 1358 moved from 1351.   The top limit switch was not working when router was moving up.   Checking the buffer after 
-                                                        a move insted of before the move.   Up function now exactly the same as the down function
-                                          v. 5.5.0_0_03_2021
-                                    01_03_2021  CDW --   starting the code on the power fence.   Adding ball screw and limit switches, controlling fence with HMI
-                                    02_20_2022  CDW --   modified the setPosition and SaveToMemory functions to account for router position instead of curPos  Needed to fix the settings
-                                                         screen so the router position is set every time instead of getting the fence position if the fence was last button
-                                                         pushed
-                                          v. 5.60_09_20_2021_A
-                                    08_22_2022  CDW --  Modified the section for looking up custom bits from EEPROM.   the bug was EEPROM.read when it should have been EEPROM.get
+  01/24/2020 -- CDW   IMPORTANT!!!!! Found out the hard way, if we remove buttons or slide things around in the Nextion IDE, make sure to check the object id's with the
+                      NEX<object> definition section.   When the create/remove/move around happens in the IDE, it seems the object ID's are modified,
+                      thereby causing the listening service on the arduino to mis-match the objects with the call backs.
+                    
+                      ALSO -- this may be a grounding problem.  If the Nextion is not grounded correctly, there are unexplainable behaviors
+                      the same error is flagged when there is a grounding problem
+
+  02/12/2020 -- CDW   change the settings screen, putting the pin and variable configuration into the UI
+            v2.7
+  02/15/2020 -- CDW   Very good complete version finished.   Will call this version 3.0 and will deploy for burn-in test on teh router table.
+            v 3.0      put to the router table on 2/17/2020, have the file for the Memory screen set to tokenize it based on the section
+  02/21/2020 -- CDW   Error dialog implemented, fixed error logging to the HMI screen
+            v 3.13     Deployed to the router lift on 02/22/2020 at 12/30 PM
+  02/23/2020 -- CDW   added versioning, fixed a couple small bugs, redployed to router 
+          v. 3.14_02_22_2020
+  02/23/2020 -- CDW   modified how the pushcallbacks worked for the up and down buttons on settings and memory
+          v. 3.15_02_23_2020
+  02/23/2020 -- CDW   modified how all the saves, deletes and write to disk work on Memory screen.   Will add goto 0 button
+                      on the memory screen as well.   button will lower router after completing mortise cuts
+  02/24/2020 -- CDW   refactored some of the inefficient code, change some fo the callbacks to point to same functions
+        v. 4.1_02_24_2020
+  02/24/2020 -- CDW   refactored the write to file on the Memory screen.  Now, all lines are read to structure, and rewritten
+                      no more losing content, or having strange characters bleed into the file.   No change to the UI in the Nextion
+                      IDE
+        v 4.1.1_02_24_2020
+  02/26/2020 -- CDW   Refactored memory file config.   Allowed for an old file to be opened, and not over write the data in that file
+        v. 4.2.1_02_26_2020
+  02/29/2020  -- CDW  Refactored errors  to read the strings from a file.  Rewrote function ErrorDialog and all ErrorDialog commands
+        v 4.3.1_02_29_2020
+  03_07_2020 -- CDW   fixed error on memory screen.   change the check to -currentPosition() because we are storing positions above the tabel as 
+                      positive #'s
+        v.4.3.2_03_07_2020
+  03_08_2020 -- CDW   modified the bits screen, have all the custom bit movement configured in HEIGHTS.cfg, and can configure the bits without
+                      having to recompile.   Am using the LoadRouterfromMemory function to set the router off the bits screen
+        v.4.4.0_03_08_2020
+  03_15_2020 -- CDW   added a position field to the Memory screen so we are notified when the router has stopped moving.   Gives us a flag
+                      that we have reached the height set in the depth field.
+        v.4.4.1_03_15_2020
+  09_19_2020  CDW -- line 1358 moved from 1351.   The top limit switch was not working when router was moving up.   Checking the buffer after 
+                      a move insted of before the move.   Up function now exactly the same as the down function
+        v. 5.5.0_0_03_2021
+  01_03_2021  CDW --   starting the code on the power fence.   Adding ball screw and limit switches, controlling fence with HMI
+  02_20_2022  CDW --   modified the setPosition and SaveToMemory functions to account for router position instead of curPos  Needed to fix the settings
+                        screen so the router position is set every time instead of getting the fence position if the fence was last button
+                        pushed
+        v. 5.60_09_20_2021_A
+  08_22_2022  CDW --  Modified the section for looking up custom bits from EEPROM.   the bug was EEPROM.read when it should have been EEPROM.get
+  10_22_2022  CDW --  Modified readSettingsEEPROM() to use EEPROM.get everywhere.   search date for documented line change
+  11_20_2022  CDW --  added the bounceMotorOffLimit function to streamline code and manage the limit switches all in 1 place
+                      
 
 *****************************************************************************************************************************************************************************/
       
@@ -87,223 +90,7 @@
         
         // Declare your Nextion objects - Example (page id = 0, component id = 1, component name = "b0"    Fully qualifying with the screen name
         //  creates ability to use in nexSerial.write commands, without having to go through the libraries)
-        
-/***********************************************************************************
-    Setting up an array of structures to hold the config to do a lookup for # of steps required to move a specific distance
-    
-    <lookup value>, <inch value>, <decimal equivalent>, <baseline steps>
-
-    Baseline steps are based on a 200 steps per turn, on a 1.8 degree pitch, with a lead of 10mm Leed (10mm traveled per turn)
-    and no microsteps
-                      steps per turn * microsteps*4 (phases)                          inches
-                      ---------------------------  = # of steps per mm to travel     --------  =  # of steps per inch travel
-                          distance traveled                                         25.4 mm/inch
-
-                          multiply the basics steps by 8, to get the 8 microsteps
-************************************************************************************************/
-    struct inchCacl {
-          int    index;
-          char   inches[6];
-          float  decimal;
-          float  steps;
-          char   label[30];
-        }  preSetLookup; 
-        
-        
-/**********************
-    My easy way to write to the Serial debugger screen
- **********************
-        
-        void writeDebug (String toWrite, byte LF)
-        {
-          if (LF)
-          {
-            debugLn(toWrite);
-          }
-          else
-          {
-            debug(toWrite);
-          }
-        
-        }*/
-/*********************************
-     int   ErrorDialog (char *outMessage, char *b1Text, char *b2Text, char *yesScreen , char *noScreen)
-              this will pop up the error screen, set the message txt in multiline format, set the buttons
-              to the text passed in, and if appropriate, navigate to a new place in the app
-              The yesScreen and noScreen will navigate to the designated screen when the error dialog is closed.
-              b1Text and b2Text will be displayed on the Yes and No buttons
- ***********************************************************************************************/
-        
-        int   ErrorDialog (int ErrorNum) {
-         
-          char  msgCommand[300] = {'\0'};
-          char  errorString[200] = {'\0'};        // used for the fgets function to read a file line
-          char  bYesLbl[24] = {'\0'};
-          char  bNoLbl[24] = {'\0'};
-          int   serRead[7];
-          char  errorTitle[25] = {'\0'};
-          char  errorText[200] = {'\0'};
-          char  yesScreen[12] = {'\0'};
-          char  noScreen[12] = {'\0'};
-          char  *token, *elim;
-          char  delim[] = {',','\0'};
-          char  crCheck[2] = {'^', '\0'};
-          char  checker;
-          char  errText1[200];
-          char  errText2[200];
-          char  errText3[200];
-          char  errText4[200];
-          char  errText5[200];
-          int   i, p;
-          SdBaseFile   fError;
-          if(!fError.open("Error.cfg"))
-            {
-              return 0;
-            }
-          fError.rewind();
-          checker = '1';
-          while (checker != '^')              // read the header
-            {
-           
-              checker = fError.read();
-            }
-
-          checker = fError.fgets(errorTitle, sizeof(errorTitle));         //read the carraige return before the errors start
-          while ( fError.available())
-            {
-              memset (errorString, '\0', sizeof(errorString));
-              fError.fgets (errorString, sizeof(errorString));
-              token =strtok(errorString, delim);
-
-              if (atoi(token) == ErrorNum)
-                {
-                  for (i=2; i<= 7; i++)
-                    {
-                      token = strtok(NULL, delim);
-                      switch (i)
-                        {
-                          case 2:
-                            strcpy(errorTitle, token);
-                            break;
-                          case 3:
-                            strcpy(errorText, token);
-                            break;
-                          case 4:
-                            strcpy(bYesLbl, token);
-                            break;
-                          case 5:
-                            strcpy(bNoLbl, token);
-                            break;
-                          case 6:
-                            strcpy(yesScreen, token);
-                            break;
-                          case 7:
-                            strcpy(noScreen, token);
-                            fError.seekEnd();
-                            break;
-                        }
-                    }
-                }
-            }
-          fError.close();
-          nexSerial.write("page Error");
-          FlushBuffer();   
-          if (strlen(bYesLbl) > 0)
-          {
-            sprintf(msgCommand, "Error.bYes.txt=\"%s\"", bYesLbl);
-            nexSerial.write(msgCommand);
-            FlushBuffer();
-          }
-        
-          if (strlen(bNoLbl) > 0)
-          {
-            sprintf(msgCommand, "Error.bNo.txt=\"%s\"", bNoLbl);
-        
-            nexSerial.write(msgCommand);
-            FlushBuffer();
-          }      
-         
-          sprintf(msgCommand,"Error.tErrorHead.txt=\"%s\"", errorTitle);
-          nexSerial.write(msgCommand);
-          FlushBuffer();
-          memset (msgCommand, '\0', sizeof(msgCommand));
-          token = strtok(errorText, crCheck);
-          p=0;
-          for (i = 0; i<=4; i++)
-            {
-              if ( token !=NULL)
-                {
-                  switch (i)
-                    {
-                      case 0:
-                        sprintf (errText1, "%s",token);
-                        break;
-                      case 1:
-                        strcpy (errText2, token);
-                        p++;
-                        break;
-                      case 2:
-                        strcpy (errText3, token);
-                        p++;
-                        break;
-                      case 3:
-                        strcpy (errText4, token);
-                        p++;
-                        break;
-                      case 4:
-                        strcpy (errText5, token);
-                        p++;
-                        break;
-                    }
-                 token = strtok(NULL, crCheck);
-                }
-              else
-                 i=6;
-            }
-          switch (p)
-            {
-              case 0:
-                sprintf(msgCommand, "Error.tErrorMsg.txt=\"%s\"", errorText);
-                break;
-              case 1:
-                sprintf(msgCommand, "Error.tErrorMsg.txt=\"%s\r\n%s\"", errText1, errText2);
-                break;
-              case 2:
-                sprintf(msgCommand, "Error.tErrorMsg.txt=\"%s\r\n%s\r\n%s\"", errText1, errText2, errText3);
-                break;
-              case 3:
-                sprintf(msgCommand, "Error.tErrorMsg.txt=\"%s\r\n%s\r\n%s\r\n\%s\"", errText1, errText2, errText3, errText4);
-                break;
-              case 4:
-                sprintf(msgCommand, "Error.tErrorMsg.txt=\"%s\r\n%s\r\n%s\r\n\%s\r\n%s\"", errText1, errText2, errText3, errText4, errText5);
-                break;
               
-            } 
-    //      sprintf(msgCommand, "Error.tErrorMsg.txt=\"%s\"", errorText);
-          nexSerial.write(msgCommand);
-          FlushBuffer();
- 
-          if (nexSerial.peek() != 101)
-            nexSerial.read();
-          while (nexSerial.peek() != 101 )
-          {
-            nexSerial.read();
-            delay(100);
-          }
-          memset(serRead, '\0', sizeof(serRead));
-          for (int i = 0; i <= 6; i++)
-            serRead[i] = nexSerial.read();
-          memset (msgCommand, '\0', sizeof(msgCommand));
-          if (serRead[2] == 4)
-            sprintf(msgCommand, "page %s", yesScreen);
-          else if (serRead[2] == 5)
-            sprintf(msgCommand, "page %s", noScreen);
-          nexSerial.write (msgCommand);
-          FlushBuffer();
-          return serRead[2];
-        
-        }
-        
 /********************************
   Single function call to turn off power to motor
 *********************************/
@@ -489,6 +276,185 @@
             FlushBuffer();
         }
       
+/*********************************
+     int   ErrorDialog (char *outMessage, char *b1Text, char *b2Text, char *yesScreen , char *noScreen)
+              this will pop up the error screen, set the message txt in multiline format, set the buttons
+              to the text passed in, and if appropriate, navigate to a new place in the app
+              The yesScreen and noScreen will navigate to the designated screen when the error dialog is closed.
+              b1Text and b2Text will be displayed on the Yes and No buttons
+ ***********************************************************************************************/
+        
+        int   ErrorDialog (int ErrorNum) {
+         
+          char  msgCommand[300] = {'\0'};
+          char  errorString[200] = {'\0'};        // used for the fgets function to read a file line
+          char  bYesLbl[24] = {'\0'};
+          char  bNoLbl[24] = {'\0'};
+          int   serRead[7];
+          char  errorTitle[25] = {'\0'};
+          char  errorText[200] = {'\0'};
+          char  yesScreen[12] = {'\0'};
+          char  noScreen[12] = {'\0'};
+          char  *token, *elim;
+          char  delim[] = {',','\0'};
+          char  crCheck[2] = {'^', '\0'};
+          char  checker;
+          char  errText1[200];
+          char  errText2[200];
+          char  errText3[200];
+          char  errText4[200];
+          char  errText5[200];
+          int   i, p;
+          SdBaseFile   fError;
+          if(!fError.open("Error.cfg"))
+            {
+              return 0;
+            }
+          fError.rewind();
+          checker = '1';
+          while (checker != '^')              // read the header
+            {
+           
+              checker = fError.read();
+            }
+
+          checker = fError.fgets(errorTitle, sizeof(errorTitle));         //read the carraige return before the errors start
+          while ( fError.available())
+            {
+              memset (errorString, '\0', sizeof(errorString));
+              fError.fgets (errorString, sizeof(errorString));
+              token =strtok(errorString, delim);
+
+              if (atoi(token) == ErrorNum)
+                {
+                  for (i=2; i<= 7; i++)
+                    {
+                      token = strtok(NULL, delim);
+                      switch (i)
+                        {
+                          case 2:
+                            strcpy(errorTitle, token);
+                            break;
+                          case 3:
+                            strcpy(errorText, token);
+                            break;
+                          case 4:
+                            strcpy(bYesLbl, token);
+                            break;
+                          case 5:
+                            strcpy(bNoLbl, token);
+                            break;
+                          case 6:
+                            strcpy(yesScreen, token);
+                            break;
+                          case 7:
+                            strcpy(noScreen, token);
+                            fError.seekEnd();
+                            break;
+                        }
+                    }
+                }
+            }
+          fError.close();
+          nexSerial.write("page Error");
+          FlushBuffer();   
+          if (strlen(bYesLbl) > 0)
+          {
+            sprintf(msgCommand, "Error.bYes.txt=\"%s\"", bYesLbl);
+            nexSerial.write(msgCommand);
+            FlushBuffer();
+          }
+        
+          if (strlen(bNoLbl) > 0)
+          {
+            sprintf(msgCommand, "Error.bNo.txt=\"%s\"", bNoLbl);
+        
+            nexSerial.write(msgCommand);
+            FlushBuffer();
+          }      
+         
+          sprintf(msgCommand,"Error.tErrorHead.txt=\"%s\"", errorTitle);
+          nexSerial.write(msgCommand);
+          FlushBuffer();
+          memset (msgCommand, '\0', sizeof(msgCommand));
+          token = strtok(errorText, crCheck);
+          p=0;
+          for (i = 0; i<=4; i++)
+            {
+              if ( token !=NULL)
+                {
+                  switch (i)
+                    {
+                      case 0:
+                        sprintf (errText1, "%s",token);
+                        break;
+                      case 1:
+                        strcpy (errText2, token);
+                        p++;
+                        break;
+                      case 2:
+                        strcpy (errText3, token);
+                        p++;
+                        break;
+                      case 3:
+                        strcpy (errText4, token);
+                        p++;
+                        break;
+                      case 4:
+                        strcpy (errText5, token);
+                        p++;
+                        break;
+                    }
+                 token = strtok(NULL, crCheck);
+                }
+              else
+                 i=6;
+            }
+          switch (p)
+            {
+              case 0:
+                sprintf(msgCommand, "Error.tErrorMsg.txt=\"%s\"", errorText);
+                break;
+              case 1:
+                sprintf(msgCommand, "Error.tErrorMsg.txt=\"%s\r\n%s\"", errText1, errText2);
+                break;
+              case 2:
+                sprintf(msgCommand, "Error.tErrorMsg.txt=\"%s\r\n%s\r\n%s\"", errText1, errText2, errText3);
+                break;
+              case 3:
+                sprintf(msgCommand, "Error.tErrorMsg.txt=\"%s\r\n%s\r\n%s\r\n\%s\"", errText1, errText2, errText3, errText4);
+                break;
+              case 4:
+                sprintf(msgCommand, "Error.tErrorMsg.txt=\"%s\r\n%s\r\n%s\r\n\%s\r\n%s\"", errText1, errText2, errText3, errText4, errText5);
+                break;
+              
+            } 
+    //      sprintf(msgCommand, "Error.tErrorMsg.txt=\"%s\"", errorText);
+          nexSerial.write(msgCommand);
+          FlushBuffer();
+ 
+          if (nexSerial.peek() != 101)
+            nexSerial.read();
+          while (nexSerial.peek() != 101 )
+          {
+            nexSerial.read();
+            delay(100);
+          }
+          memset(serRead, '\0', sizeof(serRead));
+          for (int i = 0; i <= 6; i++)
+            serRead[i] = nexSerial.read();
+          memset (msgCommand, '\0', sizeof(msgCommand));
+          if (serRead[2] == 4)
+            sprintf(msgCommand, "page %s", yesScreen);
+          else if (serRead[2] == 5)
+            sprintf(msgCommand, "page %s", noScreen);
+          nexSerial.write (msgCommand);
+          FlushBuffer();
+          return serRead[2];
+        
+        }
+
+
 /****************************************************
   int stepsFromDistance( int move_go, int index)
 
@@ -513,6 +479,7 @@
               EEPROM.get (4092, eeAddress);    // CDW   modifield 08_22_2022, changed from EEPROM.read to EEPROM.get
               counter = 1;              // called from custom bits screen, looking at custom bits section, 1 based array
             }
+      
           do
             {             
                EEPROM.get(eeAddress, preSetLookup);  
@@ -556,7 +523,7 @@
             }
           else
             strcpy(buffer, "0.00");
-          if (bMotor == 1)
+         if (bMotor == 1)
             {
               sprintf(sCommand, "Home.tPosition.txt=\"%s\"", buffer);
               nexSerial.write(sCommand);
@@ -573,9 +540,7 @@
             }
           else
             {
-              sprintf(sCommand, "Home.tFencePos.txt=\"%s\"", buffer);
-              nexSerial.write(sCommand);
-              FlushBuffer();
+            
               sprintf(sCommand, "Settings.tFencePos.txt=\"%s\"", buffer);
               nexSerial.write(sCommand);
               FlushBuffer();
@@ -585,6 +550,10 @@
               sprintf(sCommand, "Bits.tFencePos.txt=\"%s\"", buffer);
               nexSerial.write(sCommand);
               FlushBuffer();
+              sprintf(sCommand, "Home.tFencePos.txt=\"%s\"", buffer);
+              nexSerial.write(sCommand);
+              FlushBuffer();
+              
             }      
         }
              
@@ -627,7 +596,7 @@
           eeAddress += sizeof (FRONT_SWITCH);
           EEPROM.get(eeAddress, BACK_SWITCH);
           eeAddress += sizeof (BACK_SWITCH);
-          REZERO = EEPROM[eeAddress];
+          EEPROM.get (eeAddress, REZERO);       //  10_16_2022 CDW --> changed to EEPROM.get to match 
           eeAddress += sizeof(REZERO);
           EEPROM.get(eeAddress, maxAcceleration);
           eeAddress += sizeof(maxAcceleration);
@@ -843,7 +812,6 @@
 
      if (fraction == 0)      
         {
-      //    Serial.println(preSetLookup.decimal);
           inches = (atof(thickness)/2) + preSetLookup.decimal;
           dtostrf(inches, 3, 4, newThick);
           sprintf(sCommand, "t3.txt=\"%s\"",newThick);
@@ -1065,9 +1033,10 @@
           02/09/2020   CDW -- added the check of the OFF button being pushed.   Will use this functionality to read the reial buffer
                               if the off button is pushed, the motor shoudl stop moving.
   01/03/20201 --- need to rewrite logic to know which motor is moving.   bDirection could be up or down, front or back.   If front to back, need to use sFence instead of sRouter
+  11/20/2022  CDW -- modified the bouncing off the limit switches
  * ****************************************/
         
-        double moveRouterToLimit (byte bDirection, double dSpeedFlag)
+    double moveRouterToLimit (byte bDirection, double dSpeedFlag)
         {
           int whichSwitch;
           bGo = DOWN;
@@ -1075,7 +1044,7 @@
             whichSwitch = TOP_SWITCH;
           else
             whichSwitch = BOTTOM_SWITCH;
-          while (digitalRead(whichSwitch) == HIGH && bGo)
+          while (!digitalRead(whichSwitch) && bGo)
           {
             if (bDirection == DOWN)
               {
@@ -1095,37 +1064,18 @@
                 else
                   sRouter.setSpeed (dSpeedFlag);
               }
-              while (sRouter.currentPosition() != curPos )
+              while (sRouter.currentPosition() != curPos && !digitalRead(whichSwitch) == HIGH)
                 sRouter.runSpeed();
               bGo = checkStopButton();
+
               
           }
           nexSerial.print("vis pStop,1");              // bring up the Stop sign to help remind we have hit a limit switch
           FlushBuffer();
         
-          while ( digitalRead(whichSwitch) == LOW  )   //  bounce the screw off the limiter switch
-          {
-            if (bDirection == DOWN)
-            {
-              curPos = sRouter.currentPosition() + stepSize;      //just the opposit as above
-              sRouter.move(curPos);
-              if ( dSpeedFlag == -1)
-                sRouter.setSpeed(workingMotorSpeed);
-              else
-                sRouter.setSpeed(dSpeedFlag);
-            }
-            else
-            {
-             curPos = sRouter.currentPosition() - stepSize;      //just the opposite as above
-              sRouter.move(curPos);
-              if ( dSpeedFlag == -1)
-                sRouter.setSpeed(-workingMotorSpeed);
-              else
-                sRouter.setSpeed(-dSpeedFlag);
-           }
-            while (sRouter.currentPosition() != curPos )
-              sRouter.runSpeed();
-          }
+         if (digitalRead (whichSwitch))
+           bounceMotorOffLimit (whichSwitch, bDirection, &sRouter ); // 11_20_2022 - removed all logic for bouncing.   Call function instead
+   
           nexSerial.print("vis pStop,0");              // bring up the Stop sign to help remind we have hit a limit switch
           FlushBuffer();
           return sRouter.currentPosition();
@@ -1139,51 +1089,33 @@
    01/03/2021 --- copy this function for the Fence move back button
 ******************************************/
       
-        void bMoveUpPushCallback(void *ptr) {
+  void bMoveUpPushCallback(void *ptr) {
           int cBuff = -1;
         
-          while (digitalRead(TOP_SWITCH) == HIGH && cBuff == -1 && bGo)
-          {     
-            curPos = sRouter.currentPosition() - stepSize;
-            sRouter.move(curPos);
-            sRouter.setSpeed(-workingMotorSpeed);
-            while (sRouter.currentPosition() != curPos  && workingMotorSpeed > 0)
-            {
-              sRouter.runSpeed();
-            }
-            cBuff = nexSerial.read ();
-          }
-        
-/******************************************
-  Becuase I intercepted the serial buffer to see if the button was lifted,
-  I have to call the PopCallBack to emulate the button being lifted
-  Ths test says, the button was lifted before the limit switch was hit
-  because the event was not processed on the button itself, we have to tell the
-  controller, the button was lifed up
-******************************************************************/
-          if (cBuff == 101 )
-          {
-            bMoveUpPopCallback(&bMoveUp);
-          }
-          else                                        // we have hit the bottom limit switch
-          {
-            nexSerial.print("vis pStop,1");              // bring up the Stop sign to help remind we have hit a limit switch
-            FlushBuffer();
-            while ( digitalRead(TOP_SWITCH) == LOW)   //  bounce the screw off the limiter switch
-            {
-              curPos = sRouter.currentPosition() + stepSize;      //just the opposite as above
+
+          while (!digitalRead(TOP_SWITCH)&& cBuff == -1 && bGo)
+            {     
+              curPos = sRouter.currentPosition() - stepSize;
               sRouter.move(curPos);
-              sRouter.setSpeed(workingMotorSpeed);
-        
-              while (sRouter.currentPosition() != curPos  && workingMotorSpeed > 0)
-              {
+              sRouter.setSpeed(-workingMotorSpeed);
+              while (sRouter.currentPosition() != curPos  && workingMotorSpeed > 0 && !digitalRead (TOP_SWITCH))
                 sRouter.runSpeed();
-              }
+              
+              cBuff = nexSerial.read ();
             }
+        
+          if (digitalRead (TOP_SWITCH))
+            {
+              nexSerial.print("vis pStop,1");              // bring up the Stop sign to help remind we have hit a limit switch
+              FlushBuffer();
+              bounceMotorOffLimit (TOP_SWITCH, DOWN, &sRouter ); // 11_20_2022 removed all logic and call function instead
+            } 
+          
             highLimit = -curPos;
             nexSerial.print("vis pStop,0");              // bring up the Stop sign to help remind we have hit a limit switch
             FlushBuffer();
-          }
+      
+          setPositionField(1);
         
         }
         
@@ -1207,50 +1139,32 @@
  *****************************************************/
         void bMoveDownPushCallback (void *ptr)  {
           int cBuff = -1;
-          char buffer[16];     
-          while (digitalRead(BOTTOM_SWITCH) == HIGH && cBuff == -1 && bGo)
+          char buffer[16];          
+    
+          while (!digitalRead(BOTTOM_SWITCH) && cBuff == -1 && bGo)
           {
             curPos = sRouter.currentPosition() + stepSize;
             sRouter.move(curPos);
             sRouter.setSpeed(workingMotorSpeed);
         
-            while (sRouter.currentPosition() != curPos  && workingMotorSpeed > 0)
+            while (sRouter.currentPosition() != curPos  && workingMotorSpeed > 0 && !digitalRead (BOTTOM_SWITCH))
             {
               sRouter.runSpeed();
             }
             cBuff = nexSerial.read ();
           }
-          /******************************************
-            Becuase I intercepted the serial buffer to see if the button was lifted,
-            I have to call the PopCallBack to emulate the button being lifted
-            Ths test says, the button was lifted before the limit switch was hit
-            because the event was not processed on the button itself, we have to tell the
-            controller, the button was lifed up
-          ******************************************************************/
-          if (cBuff == 101 )
-          {
-            bMoveUpPopCallback(&bMoveDown);
-          }
-          else                                          // we have hit the bottom limit switch
-          {
-            nexSerial.print("vis pStop,1");              // bring up the Stop sign to help remind we have hit a limit switch
-            FlushBuffer();
-            while ( digitalRead(BOTTOM_SWITCH) == LOW)   //  bounce the screw off the limiter switch
+       
+          if (digitalRead(BOTTOM_SWITCH))
             {
-              curPos = sRouter.currentPosition() - stepSize;      //just the opposite as above
-              sRouter.move(curPos);
-              sRouter.setSpeed(-workingMotorSpeed);
-        
-              while (sRouter.currentPosition() != curPos  && workingMotorSpeed > 0)
-              {
-                sRouter.runSpeed();
-              }
+              nexSerial.print("vis pStop,1");              // bring up the Stop sign to help remind we have hit a limit switch
+              FlushBuffer();
+              bounceMotorOffLimit (BOTTOM_SWITCH, UP, &sRouter); // 11_20_2022 removed code, calling function instead
             }
-            lowLimit = -curPos;
-            nexSerial.print("vis pStop,0");              // bring up the Stop sign to help remind we have hit a limit switch
-            FlushBuffer();
-          }
-        }
+          lowLimit = -curPos;
+          nexSerial.print("vis pStop,0");              // bring up the Stop sign to help remind we have hit a limit switch
+          FlushBuffer();
+          setPositionField(1);
+     }
         
 /****************************************************
    void bMoveDownPopCallback(void *ptr)
@@ -1272,54 +1186,32 @@
    01/08/2021 --- Modify this for moving fence motor, this is only a prototype
 ******************************************/
       
-        void bForwardPushCallback(void *ptr) {
-          int cBuff = -1;
-          sStepper = &sFence;
-        
-          while (digitalRead(FRONT_SWITCH) == HIGH && cBuff == -1 && bGo)
-          {     
-            curPos = sFence.currentPosition() - stepSize;
-            sFence.move(curPos);
-            sFence.setSpeed(-workingMotorSpeed);
-            while (sFence.currentPosition() != curPos  && workingMotorSpeed > 0)
-            {
-              sFence.runSpeed();
-            }
-            cBuff = nexSerial.read ();
-          }
-        
-/******************************************
-  Becuase I intercepted the serial buffer to see if the button was lifted,
-  I have to call the PopCallBack to emulate the button being lifted
-  Ths test says, the button was lifted before the limit switch was hit
-  because the event was not processed on the button itself, we have to tell the
-  controller, the button was lifed up
-******************************************************************/
-          if (cBuff == 101 )
-          {
-            bForwardPopCallback(&bMoveUp);
-          }
-          else                                        // we have hit the bottom limit switch
-          {
-            nexSerial.print("vis pStop,1");              // bring up the Stop sign to help remind we have hit a limit switch
-            FlushBuffer();
-            while ( digitalRead(FRONT_SWITCH) == LOW)   //  bounce the screw off the limiter switch
-            {
-              curPos = sFence.currentPosition() + stepSize;      //just the opposite as above
-              sFence.move(curPos);
-              sFence.setSpeed(workingMotorSpeed);
-        
-              while (sFence.currentPosition() != curPos  && workingMotorSpeed > 0)
-              {
-                sFence.runSpeed();
-              }
-            }
-            highLimit = -curPos;
-            nexSerial.print("vis pStop,0");              // bring up the Stop sign to help remind we have hit a limit switch
-            FlushBuffer();
-          }
-        
+ void bForwardPushCallback(void *ptr) 
+   {
+      int cBuff = -1;
+      sStepper = &sFence;
+    
+      while (digitalRead(FRONT_SWITCH) && cBuff == -1 && bGo)
+      {     
+        curPos = sFence.currentPosition() + stepSize;
+        sFence.move(curPos);
+        sFence.setSpeed(workingMotorSpeed);
+        while (sFence.currentPosition() != curPos)
+          sFence.runSpeed();
+        cBuff = nexSerial.read ();
+      }
+          
+      if (!digitalRead (FRONT_SWITCH) )
+        {
+          nexSerial.print("vis pStop,1");              // bring up the Stop sign to help remind we have hit a limit switch
+          FlushBuffer();
+          bounceMotorOffLimit (FRONT_SWITCH, BACK, &sFence);    // 11_20_2022 -- call function instead of all bouncing logic in code
         }
+      highLimit = -curPos;
+      nexSerial.print("vis pStop,0");              // bring up the Stop sign to help remind we have hit a limit switch
+      FlushBuffer();
+      setPositionField(0);
+    }
         
 /***************************************************
    void bForwardPopCallback(void *ptr)
@@ -1343,51 +1235,31 @@
         or you hit the limit switch
 
  *****************************************************/
-        void bBackPushCallback (void *ptr)  {
+  void bBackPushCallback (void *ptr)  {
           int cBuff = -1;
           char buffer[16];   
-          while (digitalRead(BACK_SWITCH) == HIGH && cBuff == -1 && bGo)
-          {
-            curPos = sFence.currentPosition() + stepSize;
-            sFence.move(curPos);
-            sFence.setSpeed(workingMotorSpeed);
-            while (sFence.currentPosition() != curPos  && workingMotorSpeed > 0)
+
+          while (digitalRead(BACK_SWITCH) && cBuff == -1 && bGo)
             {
-              sFence.runSpeed();
-            }
-            cBuff = nexSerial.read ();
-          }
-          /******************************************
-            Becuase I intercepted the serial buffer to see if the button was lifted,
-            I have to call the PopCallBack to emulate the button being lifted
-            Ths test says, the button was lifted before the limit switch was hit
-            because the event was not processed on the button itself, we have to tell the
-            controller, the button was lifed up
-          ******************************************************************/
-          if (cBuff == 101 )
-          {
-            bBackPopCallback(&bBack);
-          }
-          else                                          // we have hit the bottom limit switch
-          {
-            nexSerial.print("vis pStop,1");              // bring up the Stop sign to help remind we have hit a limit switch
-            FlushBuffer();
- 
-            while ( digitalRead(BACK_SWITCH) == LOW)   //  bounce the screw off the limiter switch
-            {
-              curPos = sFence.currentPosition() - stepSize;      //just the opposite as above
+              curPos = sFence.currentPosition() - stepSize;
               sFence.move(curPos);
-              sFence.setSpeed(-workingMotorSpeed);
-        
-              while (sFence.currentPosition() != curPos  && workingMotorSpeed > 0)
-              {
+              sFence.setSpeed( -workingMotorSpeed);
+              while (sFence.currentPosition() != curPos  && workingMotorSpeed > 0 && digitalRead(BACK_SWITCH))
                 sFence.runSpeed();
-              }
+            
+              cBuff = nexSerial.read ();
             }
-            lowLimit = -curPos;
-            nexSerial.print("vis pStop,0");              // bring up the Stop sign to help remind we have hit a limit switch
-            FlushBuffer();
-          }
+              
+          if (!digitalRead (BACK_SWITCH) )
+            {
+              nexSerial.print("vis pStop,1");              // bring up the Stop sign to help remind we have hit a limit switch
+              FlushBuffer();
+              bounceMotorOffLimit (BACK_SWITCH, FORWARD, &sFence);   // 11_20_2022 -- call function instead of all bouncing logic in code
+            }
+          lowLimit = -curPos;
+          nexSerial.print("vis pStop,0");              // bring up the Stop sign to help remind we have hit a limit switch
+          FlushBuffer();
+          setPositionField(0);
         }
         
 /****************************************************
@@ -1477,13 +1349,15 @@
         
           if (SET_MOTOR == 1 )
             {
-              while (digitalRead(REZERO) == HIGH && digitalRead(TOP_SWITCH) == HIGH && bGo)   // keep moving the router up until we hit the calibration bar or top limit
+              sRouter.setCurrentPosition (0);
+              while (digitalRead(REZERO) && !digitalRead(TOP_SWITCH) && !digitalRead(BOTTOM_SWITCH) && bGo)   // keep moving the router up until we hit the calibration bar or top limit
                 {
                   curPos = sRouter.currentPosition() - stepSize;
                   sRouter.move(curPos);
-                  sRouter.setSpeed(-workingMotorSpeed);
+                  sRouter.setSpeed( -workingMotorSpeed);
                   sRouter.runSpeedToPosition();
                   bGo = checkStopButton();
+        
                 }
               if (!bGo)
                 bGo = turnMotorOff(UP);
@@ -1525,7 +1399,7 @@
    Button bHomeChageBit component pop callback function.
    Moves the router up at max speed until the limit switch is hit
 
- 01/03/2021 -- move the fence back to teh back limit switch.   Need to move the fence out of the way of the router hole insert  
+ 01/03/2021 -- move the fence back to the back limit switch.   Need to move the fence out of the way of the router hole insert  
 ******************************************************************/
         void bChangeBitPopCallback(void *ptr) {
         
@@ -1642,7 +1516,7 @@
             bgotoZeroPopCallback(&bgotoZero);   // if we are setting an absolute value, go to 0 first, then set the bit height (testing for Fence handled inside)
           }
            
-          if (StructIndex >= 0)
+        if (StructIndex >= 0)
           {
             microSteps = (microPerStep * 4) * preSetLookup.steps;
  
@@ -1651,8 +1525,7 @@
             else
               curPos = sFence.currentPosition();
           }
-        
-          if (microSteps)       // only move if there are steps to move, All logic should be wrapped in a mocrosteps function
+        if (microSteps)       // only move if there are steps to move, All logic should be wrapped in a mocrosteps function
           {
             if (gomove == LOW)
             {
@@ -1661,7 +1534,7 @@
             swDirection.getValue(&bDirection);
             if (bDirection == UP)
             {
-              if (HOME_MOTOR == HIGH )
+              if (HOME_MOTOR )
                 {
                   curPos = sRouter.currentPosition() - microSteps;
                   sRouter.move(curPos);
@@ -1676,7 +1549,7 @@
             }
             else
             {
-              if (HOME_MOTOR == HIGH )
+              if (HOME_MOTOR)
                 {
                   curPos = sRouter.currentPosition() + microSteps;
                   sRouter.move(curPos);
@@ -1690,85 +1563,61 @@
                 }
               
             }
-            if (HOME_MOTOR == 1)
+            if (HOME_MOTOR)
              {
-                while (sRouter.currentPosition() != curPos  && bGo)
+                while (sRouter.currentPosition() != curPos  && bGo && !digitalRead(TOP_SWITCH) && !digitalRead (BOTTOM_SWITCH))
+                  sRouter.runSpeed();
+    
+                if (digitalRead(BOTTOM_SWITCH))
                   {
-                    sRouter.runSpeed();
-                    if (digitalRead(BOTTOM_SWITCH) == LOW )     // See if we have bottomed out the router
-                    {
-              
-                      nexSerial.print("vis pStop,1");              // bring up the Stop sign to help remind we have hit a limit switch
-                      FlushBuffer();
-                      curPos = sRouter.currentPosition() - stepSize;
-              
-                      sRouter.move(curPos);
-                      sRouter.setSpeed(-workingMotorSpeed);
-                      while (digitalRead(BOTTOM_SWITCH) == LOW)  // if we have bottomed out - bounce the router off the limit switch
-                      {
-                        sRouter.runSpeed();
-                      }
-                      curPos = sRouter.currentPosition();
-                      lowLimit = -curPos;
-                    }
-                    if (digitalRead(TOP_SWITCH) == LOW )          // see if we have hit the top switch
-                    {
-                      nexSerial.print("vis pStop,1");              // bring up the Stop sign to help remind we have hit a limit switch
-                      FlushBuffer();
-                      curPos = sRouter.currentPosition() + stepSize;
-              
-                      sRouter.move(curPos);
-                      sRouter.setSpeed(workingMotorSpeed);
-                      while (digitalRead(TOP_SWITCH ) == LOW)    //bounce the router after hitting the top switch
-                      {
-                        sRouter.runSpeed();
-                      }
-                      curPos = sRouter.currentPosition();
-                      highLimit = -curPos;
-                    }
+                    nexSerial.print("vis pStop,1");              // bring up the Stop sign to help remind we have hit a limit switch
+                    FlushBuffer();
+                    bounceMotorOffLimit (BOTTOM_SWITCH, UP, &sRouter);   // 11_20_2022 -- call function instead of all bouncing logic in code
                   }
+                lowLimit = -curPos;
+                nexSerial.print("vis pStop,0");              // bring up the Stop sign to help remind we have hit a limit switch
+                FlushBuffer();
+                setPositionField(1);
+                if (digitalRead (TOP_SWITCH))
+                  {
+                    nexSerial.print("vis pStop,1");              // bring up the Stop sign to help remind we have hit a limit switch
+                    FlushBuffer();
+                    bounceMotorOffLimit (TOP_SWITCH, DOWN, &sRouter );   // 11_20_2022 -- call function instead of all bouncing logic in code
+                  } 
+           
+                highLimit = -curPos;
+                nexSerial.print("vis pStop,0");              // bring up the Stop sign to help remind we have hit a limit switch
+                FlushBuffer();
+      
+                setPositionField(1);
               }
             else
               {
-                 while (sFence.currentPosition() != curPos  && bGo)
-                  {
+                 while (sFence.currentPosition() != curPos  && bGo && digitalRead(FRONT_SWITCH) && digitalRead(BACK_SWITCH))
                     sFence.runSpeed();
-                    if (digitalRead(BACK_SWITCH) == LOW )     // See if we have bottomed out the router
-                      {
-              
-                        nexSerial.print("vis pStop,1");              // bring up the Stop sign to help remind we have hit a limit switch
-                        FlushBuffer();
-                        curPos = sFence.currentPosition() - stepSize;
-                
-                        sFence.move(curPos);
-                        sFence.setSpeed(-workingMotorSpeed);
-                        while (digitalRead(BACK_SWITCH) == LOW)  // if we have bottomed out - bounce the router off the limit switch
-                        {
-                          sFence.runSpeed();
-                        }
-                        curPos = sFence.currentPosition();
-                        lowLimit = -curPos;
-                      }
-                    if (digitalRead(FRONT_SWITCH) == LOW )          // see if we have hit the top switch
-                      {
-                        nexSerial.print("vis pStop,1");              // bring up the Stop sign to help remind we have hit a limit switch
-                        FlushBuffer();
-                        curPos = sFence.currentPosition() + stepSize;
-                
-                        sFence.move(curPos);
-                        sFence.setSpeed(workingMotorSpeed);
-                        while (digitalRead(FRONT_SWITCH ) == LOW)    //bounce the router after hitting the top switch
-                        {
-                          sFence.runSpeed();
-                        }
-                        curPos = sFence.currentPosition();
-                        highLimit = -curPos;
-                      }
-                  }
-              }
-            nexSerial.print("vis pStop,0");              // Turn the stop sign off
-            FlushBuffer();
         
+                if (!digitalRead (BACK_SWITCH) )
+                  {
+                    nexSerial.print("vis pStop,1");              // bring up the Stop sign to help remind we have hit a limit switch
+                    FlushBuffer();
+                    bounceMotorOffLimit (BACK_SWITCH, FORWARD, &sFence);  // 11_20_2022 -- call function instead of all bouncing logic in code
+                    lowLimit = -curPos;
+                  }
+                if (!digitalRead (FRONT_SWITCH) )
+                  {
+                    nexSerial.print("vis pStop,1");              // bring up the Stop sign to help remind we have hit a limit switch
+                    FlushBuffer();
+                    bounceMotorOffLimit (FRONT_SWITCH, BACK, &sFence);  // 11_20_2022 -- call function instead of all bouncing logic in code
+                    highLimit = curPos;
+                  }
+      
+                nexSerial.print("vis pStop,0");              // bring up the Stop sign to help remind we have hit a limit switch
+                FlushBuffer();
+                setPositionField(0);
+                 
+                  
+              }
+            
           } // end of If microsteps > 0
           setPositionField(1);
           setPositionField(0);
@@ -1977,11 +1826,11 @@
           char           buffer[15] = {'\0'};
         
           memset(buffer, '\0', sizeof(buffer));
-          tHoldCombo.getText(buffer, sizeof(buffer));
+          tHoldCombo.getText(buffer, sizeof(buffer));    // gets the text from the preset distance combo box
           memset (preSetTxt, '\0', sizeof(preSetTxt));
           strncpy(preSetTxt,buffer, sizeof(preSetTxt)-1);
           memset(buffer, '\0', sizeof(buffer));
-          tHolder.getText(buffer, sizeof(buffer));
+          tHolder.getText(buffer, sizeof(buffer));      // reading the value from the Nextion variable set when the value is selected
           preSetNum = atoi(buffer);
           if (preSetNum > 0)
           {
@@ -2006,69 +1855,6 @@
           setSpeedFromSlider(float(slideVal), DOWN);
         }
         
-/***********************************************
-    void  bSetPinsPopCallback (void *ptr)
-        function to set the pin configuration off the settings screen in the app
-
-  01/13/2021 -- need to modify this section to add the 6 pins fro the fence ball screw
-  09_20_2021 -->  Need to modify to reWrite EEPROM field instead of writing this to a file
-  10_10_2021 -->  EEPROM used for storing the settings and file writing is turned off
-**************************/
-        
-  /*      void bSetPinsPopCallback (void *ptr) {
-          
-          eeAddress = 0;
-          
-          EEPROM.put (eeAddress, directionPin);
-          eeAddress += sizeof(directionPin);
-          EEPROM.put(eeAddress, fenceDirPin);
-          eeAddress += sizeof(fenceDirPin);
-          EEPROM.put(eeAddress, stepPin);
-          eeAddress += sizeof(stepPin);
-          EEPROM.put(eeAddress, fenceStepPin);
-          eeAddress += sizeof(fenceStepPin);
-          EEPROM.put(eeAddress, enablePin);
-          eeAddress += sizeof(enablePin);
-          EEPROM.put(eeAddress, fenceEnablePin);
-          eeAddress += sizeof(fenceEnablePin);
-          EEPROM.put(eeAddress, initSpeed);
-          eeAddress += sizeof(initSpeed);
-          EEPROM.put(eeAddress, stepsPerRevolution);
-          eeAddress += sizeof(stepsPerRevolution);
-          EEPROM.put(eeAddress, microPerStep);
-          eeAddress += sizeof(microPerStep);  
-          EEPROM.put(eeAddress, pulseWidthMicros);
-          eeAddress += sizeof(pulseWidthMicros);
-          EEPROM.put(eeAddress, millisBetweenSteps);
-          eeAddress += sizeof (millisBetweenSteps);
-          EEPROM.put(eeAddress, TOP_SWITCH);
-          eeAddress += sizeof (TOP_SWITCH);
-          EEPROM.put(eeAddress, BOTTOM_SWITCH);
-          eeAddress += sizeof (BOTTOM_SWITCH);
-          EEPROM.put(eeAddress, FRONT_SWITCH);
-          eeAddress += sizeof (FRONT_SWITCH);
-          EEPROM.put(eeAddress, BACK_SWITCH);
-          eeAddress += sizeof (BACK_SWITCH);
-          EEPROM.put(eeAddress,REZERO);
-          eeAddress += sizeof(REZERO);
-          EEPROM.put(eeAddress, maxAcceleration);
-          eeAddress += sizeof(maxAcceleration);
-          EEPROM.put (eeAddress, distPerStep);
-          eeAddress += sizeof(distPerStep);   
-          EEPROM.put(eeAddress, maxMotorSpeed);
-          eeAddress += sizeof(maxMotorSpeed);
-          EEPROM.put(eeAddress, workingMotorSpeed);
-          eeAddress += sizeof(workingMotorSpeed);
-          EEPROM.put (eeAddress, ver);
-          eeAddress += sizeof(ver);
-          nTemp = EEPROM[4094];
-            if ((nTemp < eeAddress) || nTemp == 255)
-              {
-                eeAddress +=5;
-                EEPROM.put (4094, eeAddress); 
-              } 
-        }
-        */
 /***********************************************
     void  bSetMotorPopCallback (void *ptr)
         function to set the motor working speeds from  the settings screen in the app
@@ -2383,7 +2169,7 @@
             nexInit(115200);     //  with enahanced libraries, can pass a baud rate to the Nextion (115200 set on preinitialize of Home)
             //nexBAUD(250000);
 
-            Serial.begin(500000);
+            Serial.begin(1000000);
             // Register the pop event callback function of the components
             
             btPower.attachPop(btPowerPopCallback, &btPower);                    //  turn the motor controller on and off by setting the enablePin
@@ -2545,7 +2331,4 @@
           
           nexLoop(nex_listen_list);
 
-    /******************
-     * 10_10_2021 -->Add the mechanical interupt here, with a listener for the button to stop the ball screw motors
-     * ********************/
         }
