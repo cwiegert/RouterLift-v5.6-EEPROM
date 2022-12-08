@@ -18,7 +18,7 @@
         SdFat   sdCard;                        //  pointer to the SD card reader.   Used in storing config and memory files
         int     eeAddress =100;
         int     stepSize = 3;
-        char    ver[21] = "v. 5.6.1.11_20_2022;
+        char    ver[21] = "v. 5.6.1.11_26_2022";
 
 
         int         TOP_SWITCH = 7;

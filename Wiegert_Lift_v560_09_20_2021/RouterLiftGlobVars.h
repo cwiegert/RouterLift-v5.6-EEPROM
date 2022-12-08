@@ -66,7 +66,7 @@
         char    posInch[16] = {'\0'};         //  string to hold inch position for moving router
         char    curRoutPosInch[16] = {'\0'};  //  string to hold router height in inches.   Used on memory screen
         SdFat   sdCard;                       //  pointer to the SD card reader.   Used in storing config and memory files
-        int    bGo = DOWN;                    //  used as a flag to test if the stop button has been pressed.
+        uint32_t   bGo = DOWN;                    //  used as a flag to test if the stop button has been pressed.
         char    storeFile[25] = {'\0'};       //  name of file where the memory will be stored
         const  PROGMEM char    fileName[20] = "LiftPinsConfig.cfg";    // Configuration file for the pins, router speed, memory file and version #
         int     eeAddress;

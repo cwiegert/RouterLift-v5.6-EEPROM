@@ -72,6 +72,8 @@
   08_22_2022  CDW --  Modified the section for looking up custom bits from EEPROM.   the bug was EEPROM.read when it should have been EEPROM.get
   10_22_2022  CDW --  Modified readSettingsEEPROM() to use EEPROM.get everywhere.   search date for documented line change
   11_20_2022  CDW --  added the bounceMotorOffLimit function to streamline code and manage the limit switches all in 1 place
+  12_07_2022  CDW --  change teh limit switches, had to modify loadMemorytoRouter to change the while loops.   Also move to 0 first, then move 
+                      to the heights either in the memory or on the presets
                       
 
 *****************************************************************************************************************************************************************************/
@@ -738,49 +740,49 @@
           char buffer[31];
           float inches;
           long stepsToMove = 0;
-          byte bGo = DOWN;
           int  buttonNum;
           byte direct;
           uint16_t  characters;
 
-          while (nexSerial.read() != -1);
           memset (buffer, '\0', sizeof(buffer));
           characters = button.getText(buffer, sizeof(buffer));
           inches = atof(buffer); 
           stepsToMove = calcSteps (inches); 
-          while (nexSerial.read() != -1);
-          sRouter.move(stepsToMove);
-          if (stepsToMove < -sRouter.currentPosition())  // modified 3/7/2020 - because of storing + positions when bit above table
-            {
-              sRouter.setSpeed(workingMotorSpeed);
-              direct = UP;
-            }              
-          else
-            {
-              sRouter.setSpeed (-workingMotorSpeed);
-              direct = DOWN;
-            }
+
 /* debugLn("about to call ErrorDialog(200)");
          ErrorDialog(200);
          if (lowLimit == 0)
-            buttonNum = ErrorDialog( 200 );   
-  */        while (-sRouter.currentPosition() != stepsToMove && bGo && digitalRead(TOP_SWITCH) == HIGH && digitalRead(BOTTOM_SWITCH) == HIGH)  // modified this, as the opposite of the standard values.   Saving above table as + numbers
+            buttonNum = ErrorDialog( 200 );  */
+         bgotoZeroPopCallback(&bBitsZero);       // 12_7_2022  modified, and move to 0 first, then up to the preset
+         sRouter.moveTo(stepsToMove);
+         sRouter.setSpeed(-workingMotorSpeed);
+         direct = UP;
+         bGo = 1;
+
+         while (sRouter.currentPosition() != -sRouter.targetPosition() && bGo && !digitalRead(TOP_SWITCH) && !digitalRead(BOTTOM_SWITCH))  // modified this, as the opposite of the standard values.   Saving above table as + numbers
             {          
               sRouter.runSpeed();
+
+
               if (bGo)
                 bGo = checkStopButton();
             }
-          if (digitalRead(TOP_SWITCH) != HIGH || digitalRead(BOTTOM_SWITCH) != HIGH)     // hit a limit switch in the previous loop
+          if (digitalRead(TOP_SWITCH)  || digitalRead(BOTTOM_SWITCH))     // hit a limit switch in the previous loop
             {
               nexSerial.print("vis pStop,1");              // bring up the Stop sign to help remind we have hit a limit switch
               FlushBuffer();
-              stepsToMove = sRouter.currentPosition() + 600; 
-              sRouter.move(stepsToMove);                         // hit a limit switch and need to bounce the router
-              if (direct == UP)
-                sRouter.setSpeed (-workingMotorSpeed);
+              
+              if (digitalRead(TOP_SWITCH))
+                {
+                  sRouter.moveTo( sRouter.currentPosition() + 600); 
+                  sRouter.setSpeed (workingMotorSpeed);
+                }
               else
-                sRouter.setSpeed(workingMotorSpeed);
-              while (sRouter.currentPosition() != stepsToMove)
+                {
+                  sRouter.moveTo(sRouter.currentPosition() - 600); 
+                  sRouter.setSpeed(-workingMotorSpeed);
+                }
+              while (sRouter.currentPosition() != sRouter.targetPosition())
                 sRouter.runSpeed();
               bGo = UP;
             }
@@ -887,7 +889,8 @@
           puts the data into the data fields on the screen
  *****************************************************/
         
-        int  LoadFromFile ( int StartRow, int MaxRow, int tokenKey, int Section)  {
+        int  LoadFromFile ( int StartRow, int MaxRow, int tokenKey, int Section)  
+          {
         
           SdBaseFile    fReader;
           int           element;
@@ -988,7 +991,6 @@
         byte  checkStopButton ()
         {     
           int incomingByte;
-          int index;
           int   StopButtons[3][2] = {
             {0, 33}, {1, 14}, {2, 56}     //   these are the pages/control #'s for the stop buttons.  if the GUI changes, check here
           };
@@ -999,24 +1001,23 @@
           incomingByte = nexSerial.read();
 
           while (incomingByte > -1 )
-          {
-            if (incomingByte == 101)
-              {
-                screen = nexSerial.read();
-                button = nexSerial.read();
- 
-              }
-            if ((StopButtons[0][0]== screen && StopButtons[0][1] == button) ||
-                (StopButtons[1][0] == screen && StopButtons[1][1] == button) || 
-                (StopButtons[2][0] == screen && StopButtons[2][1] == button) )
             {
-              bGo = UP;
-              turnMotorOff(UP);
-              return bGo;
+              if (incomingByte == 101)
+                {
+                  screen = nexSerial.read();
+                  button = nexSerial.read();
+  
+                }
+              if ((StopButtons[0][0]== screen && StopButtons[0][1] == button) ||
+                  (StopButtons[1][0] == screen && StopButtons[1][1] == button) || 
+                  (StopButtons[2][0] == screen && StopButtons[2][1] == button) )
+                {
+                  bGo = UP;
+                  turnMotorOff(UP);
+                  return bGo;
+                }
+              incomingByte = nexSerial.read();
             }
-            index++;
-            incomingByte = nexSerial.read();
-          }
           return bGo;
         }
         
@@ -1065,17 +1066,18 @@
                   sRouter.setSpeed (dSpeedFlag);
               }
               while (sRouter.currentPosition() != curPos && !digitalRead(whichSwitch) == HIGH)
-                sRouter.runSpeed();
-              bGo = checkStopButton();
-
+                  sRouter.runSpeed();
+            //  bGo = checkStopButton();
+              btPower.getValue (&bGo);
               
           }
-          nexSerial.print("vis pStop,1");              // bring up the Stop sign to help remind we have hit a limit switch
-          FlushBuffer();
-        
+                  
          if (digitalRead (whichSwitch))
-           bounceMotorOffLimit (whichSwitch, bDirection, &sRouter ); // 11_20_2022 - removed all logic for bouncing.   Call function instead
-   
+           {
+              nexSerial.print("vis pStop,1");              // bring up the Stop sign to help remind we have hit a limit switch
+              FlushBuffer();
+              bounceMotorOffLimit (whichSwitch, bDirection, &sRouter ); // 11_20_2022 - removed all logic for bouncing.   Call function instead
+           }
           nexSerial.print("vis pStop,0");              // bring up the Stop sign to help remind we have hit a limit switch
           FlushBuffer();
           return sRouter.currentPosition();
@@ -1091,9 +1093,8 @@
       
   void bMoveUpPushCallback(void *ptr) {
           int cBuff = -1;
-        
-
-          while (!digitalRead(TOP_SWITCH)&& cBuff == -1 && bGo)
+      
+          while (!digitalRead(TOP_SWITCH) && bGo && cBuff == -1)
             {     
               curPos = sRouter.currentPosition() - stepSize;
               sRouter.move(curPos);
@@ -1101,7 +1102,8 @@
               while (sRouter.currentPosition() != curPos  && workingMotorSpeed > 0 && !digitalRead (TOP_SWITCH))
                 sRouter.runSpeed();
               
-              cBuff = nexSerial.read ();
+              cBuff = nexSerial.read();
+            
             }
         
           if (digitalRead (TOP_SWITCH))
@@ -1148,10 +1150,8 @@
             sRouter.setSpeed(workingMotorSpeed);
         
             while (sRouter.currentPosition() != curPos  && workingMotorSpeed > 0 && !digitalRead (BOTTOM_SWITCH))
-            {
               sRouter.runSpeed();
-            }
-            cBuff = nexSerial.read ();
+            cBuff = nexSerial.read();
           }
        
           if (digitalRead(BOTTOM_SWITCH))
@@ -1198,7 +1198,7 @@
         sFence.setSpeed(workingMotorSpeed);
         while (sFence.currentPosition() != curPos)
           sFence.runSpeed();
-        cBuff = nexSerial.read ();
+         cBuff = nexSerial.read();
       }
           
       if (!digitalRead (FRONT_SWITCH) )
@@ -1223,9 +1223,6 @@
         void bForwardPopCallback(void *ptr) {
           setPositionField(0);     
         }
-        
-/********************************************************
-
 
 /********************************************************
     void bBackPushCallback (void *ptr)
@@ -1247,7 +1244,7 @@
               while (sFence.currentPosition() != curPos  && workingMotorSpeed > 0 && digitalRead(BACK_SWITCH))
                 sFence.runSpeed();
             
-              cBuff = nexSerial.read ();
+              cBuff = nexSerial.read();
             }
               
           if (!digitalRead (BACK_SWITCH) )
@@ -1355,8 +1352,10 @@
                   curPos = sRouter.currentPosition() - stepSize;
                   sRouter.move(curPos);
                   sRouter.setSpeed( -workingMotorSpeed);
-                  sRouter.runSpeedToPosition();
-                  bGo = checkStopButton();
+                  while (sRouter.currentPosition() != sRouter.targetPosition())
+                    sRouter.runSpeed();
+                  btPower.getValue(&bGo);
+                  //bGo = checkStopButton();
         
                 }
               if (!bGo)
@@ -1371,7 +1370,7 @@
           else        // we have chosen to 0 the fence.   Need to check if zeroing from the front to back, or back to front
             {
               swFenceDir.getValue (&uDirection);
-              while (digitalRead(FENCE_ZERO) == HIGH && digitalRead(BACK_SWITCH) == HIGH && bGo && digitalRead (FRONT_SWITCH) == HIGH)   // keep moving the router up until we hit the calibration bar or top limit
+              while (digitalRead(FENCE_ZERO) && digitalRead(BACK_SWITCH) && bGo && digitalRead (FRONT_SWITCH))   // keep moving the router up until we hit the calibration bar or top limit
                 {             
                   if (uDirection == 0 )
                     curPos = sFence.currentPosition() - stepSize;
@@ -1383,7 +1382,8 @@
                   else
                     sFence.setSpeed (workingMotorSpeed);
                   sFence.runSpeedToPosition();
-                  bGo = checkStopButton();
+                  //bGo = checkStopButton();
+                  btPower.getValue(&bGo);
                 }
               if (!bGo)
                 bGo = turnMotorOff(UP);
@@ -1566,35 +1566,36 @@
             if (HOME_MOTOR)
              {
                 while (sRouter.currentPosition() != curPos  && bGo && !digitalRead(TOP_SWITCH) && !digitalRead (BOTTOM_SWITCH))
-                  sRouter.runSpeed();
+                  {
+                    sRouter.runSpeed();
+                    btPower.getValue(&bGo);
+                  }
     
                 if (digitalRead(BOTTOM_SWITCH))
                   {
                     nexSerial.print("vis pStop,1");              // bring up the Stop sign to help remind we have hit a limit switch
                     FlushBuffer();
                     bounceMotorOffLimit (BOTTOM_SWITCH, UP, &sRouter);   // 11_20_2022 -- call function instead of all bouncing logic in code
+                    lowLimit = -curPos;
                   }
-                lowLimit = -curPos;
-                nexSerial.print("vis pStop,0");              // bring up the Stop sign to help remind we have hit a limit switch
-                FlushBuffer();
-                setPositionField(1);
-                if (digitalRead (TOP_SWITCH))
+                else if (digitalRead (TOP_SWITCH))
                   {
                     nexSerial.print("vis pStop,1");              // bring up the Stop sign to help remind we have hit a limit switch
                     FlushBuffer();
                     bounceMotorOffLimit (TOP_SWITCH, DOWN, &sRouter );   // 11_20_2022 -- call function instead of all bouncing logic in code
-                  } 
-           
-                highLimit = -curPos;
+                    highLimit = -curPos;
+                  }                 
                 nexSerial.print("vis pStop,0");              // bring up the Stop sign to help remind we have hit a limit switch
                 FlushBuffer();
-      
                 setPositionField(1);
               }
             else
               {
                  while (sFence.currentPosition() != curPos  && bGo && digitalRead(FRONT_SWITCH) && digitalRead(BACK_SWITCH))
-                    sFence.runSpeed();
+                    {
+                      sFence.runSpeed();
+                      btPower.getValue(&bGo);
+                    }
         
                 if (!digitalRead (BACK_SWITCH) )
                   {
@@ -1614,8 +1615,6 @@
                 nexSerial.print("vis pStop,0");              // bring up the Stop sign to help remind we have hit a limit switch
                 FlushBuffer();
                 setPositionField(0);
-                 
-                  
               }
             
           } // end of If microsteps > 0
@@ -1627,8 +1626,7 @@
    void bgotoZeroPopCallback(void *ptr)
 
          Button bgotoZero component push callback function.
-         Moves the router to the bottom limit switch, sets the bottom limit field, then moves to top limit switch and sets upper limit field value
-
+        Moves the Router or Fence to the previously set 0 position
 
   01/03/2021 --- implement check for fence or router movement.   Same logic can be used, but need a flag for whether we are moving the fence       
 **************************/
@@ -1637,12 +1635,12 @@
           String  sHold;
           long    newPos;
           char    buffer[16];
-          byte    bGo = DOWN;
           int     test;
           uint32_t  but;
 
           vaDelIndex.getValue(&but);
           test = but;
+          bGo = DOWN;
           vaFence.getValue (&but);   // need to test variable set by the screen navigation buttons.   When moving off th ehome screen, variable set to Router
           HOME_MOTOR = but;
 
@@ -1684,7 +1682,7 @@
               while (sRouter.currentPosition() != 0 && bGo )
                 {
                   sRouter.runSpeed();
-                  bGo = checkStopButton();
+                  //btPower.getValue(&bGo);
                 }
               setPositionField(1);
             }
@@ -1693,7 +1691,7 @@
               while (sFence.currentPosition() != 0 && bGo )
                 {
                   sFence.runSpeed();
-                  bGo = checkStopButton();
+                  //btPower.getValue(&bGo);
                 }
               setPositionField(0);
             }
@@ -2043,7 +2041,7 @@
             }
         }
 
- /***********************************************
+   /***********************************************
     void bLoadPopCallback (void *ptr)
         When the button is pressed, a variable is set in the NExtion.   This fuction will retrieve the variable
         and construct the object name to send to loadMemorytoRouter function
@@ -2125,12 +2123,22 @@
             nBit.getValue(&save);
             index = save;
             stepsFromDistance (LOW, index);
-            sprintf( sCommand, "t2.txt=\"%s\"",preSetLookup.label);
-            nexSerial.write(sCommand);
-            FlushBuffer(); 
-            dtostrf(preSetLookup.decimal, 3, 4, inches);       
-            t3.setText (inches);
-            FlushBuffer();
+            if (preSetLookup.decimal != 0)
+              {
+                sprintf( sCommand, "t2.txt=\"%s\"",preSetLookup.label);
+                nexSerial.write(sCommand);
+                FlushBuffer(); 
+                dtostrf(preSetLookup.decimal, 3, 4, inches);       
+                t3.setText (inches);
+                FlushBuffer();
+              }
+            else
+              {
+                sprintf( sCommand, "t2.txt=\"ERROR\"");
+                nexSerial.write(sCommand);
+                FlushBuffer(); 
+
+              }              
         }
         
 /******************************************************************************
@@ -2318,7 +2326,6 @@
             cbPreSetsPopCallBack(&cbPreSets);                         // if there is a value in the presets, we need to initialize the preSets variables
             hMoveSpeedPopCallback(&hMoveSpeed);                       // if there is a value for the slider, set the variables in this program    
             
-
             setPositionField(1);
             setPositionField(0);
             Home.show();
