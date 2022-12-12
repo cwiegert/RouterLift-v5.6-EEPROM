@@ -72,8 +72,9 @@
   08_22_2022  CDW --  Modified the section for looking up custom bits from EEPROM.   the bug was EEPROM.read when it should have been EEPROM.get
   10_22_2022  CDW --  Modified readSettingsEEPROM() to use EEPROM.get everywhere.   search date for documented line change
   11_20_2022  CDW --  added the bounceMotorOffLimit function to streamline code and manage the limit switches all in 1 place
-  12_07_2022  CDW --  change teh limit switches, had to modify loadMemorytoRouter to change the while loops.   Also move to 0 first, then move 
+  12_07_2022  CDW --  change the limit switches, had to modify loadMemorytoRouter to change the while loops.   Also move to 0 first, then move 
                       to the heights either in the memory or on the presets
+  12_11_2022  CDW --  updated bUp and bDown buttons to use moveTo instead of move.
                       
 
 *****************************************************************************************************************************************************************************/
@@ -109,6 +110,11 @@
             digitalWrite (fenceEnablePin, HIGH);
             nexSerial.write (sCommand);
             FlushBuffer();
+            memset (sCommand, '\0', sizeof(sCommand));
+            sprintf(sCommand, "Home.tPowerStat.txt=\"Lift is OFF\"");
+            nexSerial.write(sCommand);
+            FlushBuffer();
+         
             memset (sCommand, '\0', sizeof(sCommand));
             sprintf(sCommand, "Home.tPowerStat.pco=%ld\0", offColor);
             nexSerial.write(sCommand);
@@ -725,7 +731,7 @@
         
         //v. 5.60_09_20_2021_A
           snprintf(zero, 22, "tZero%d.txt=\"%s\"", memrow, posInch);
-          snprintf(steps, 24, "tMem%dSteps.txt=\"%d\"", memrow, sRouter.currentPosition());
+          snprintf(steps, 24, "tMem%dSteps.txt=\"%ld\"", memrow, sRouter.currentPosition());
           nexSerial.print(zero);
           FlushBuffer();
           nexSerial.print(steps);
@@ -1000,7 +1006,7 @@
           bGo = DOWN;
           incomingByte = nexSerial.read();
 
-          while (incomingByte > -1 )
+          if (incomingByte > -1 )
             {
               if (incomingByte == 101)
                 {
@@ -1012,12 +1018,16 @@
                   (StopButtons[1][0] == screen && StopButtons[1][1] == button) || 
                   (StopButtons[2][0] == screen && StopButtons[2][1] == button) )
                 {
-                  bGo = UP;
-                  turnMotorOff(UP);
-                  return bGo;
+                  incomingByte = nexSerial.read();   // read the value for the stop button pushed if 1, motors have been stopped
+                  if (incomingByte)
+                    {
+                      bGo = UP;
+                      turnMotorOff(UP);
+                      return bGo;
+                    }
                 }
-              incomingByte = nexSerial.read();
             }
+          while (nexSerial.read() > -1);
           return bGo;
         }
         
@@ -1037,7 +1047,7 @@
   11/20/2022  CDW -- modified the bouncing off the limit switches
  * ****************************************/
         
-    double moveRouterToLimit (byte bDirection, double dSpeedFlag)
+    double moveRouterToLimit (int bDirection, double dSpeedFlag)
         {
           int whichSwitch;
           bGo = DOWN;
@@ -1050,25 +1060,25 @@
             if (bDirection == DOWN)
               {
                 curPos = sRouter.currentPosition() - stepSize;
-                sRouter.move(curPos);
+                sRouter.moveTo(curPos);
                 if ( dSpeedFlag == -1 )
                   sRouter.setSpeed(-workingMotorSpeed);
                 else
                   sRouter.setSpeed (-dSpeedFlag);
               }
-              else
+            else
               {
                 curPos = sRouter.currentPosition() + stepSize;
-                sRouter.move(curPos);
+                sRouter.moveTo(curPos);
                 if (dSpeedFlag == -1)
                   sRouter.setSpeed(workingMotorSpeed);
                 else
                   sRouter.setSpeed (dSpeedFlag);
               }
-              while (sRouter.currentPosition() != curPos && !digitalRead(whichSwitch) == HIGH)
-                  sRouter.runSpeed();
-            //  bGo = checkStopButton();
-              btPower.getValue (&bGo);
+              while (sRouter.currentPosition() != sRouter.targetPosition() && !digitalRead(whichSwitch))
+                sRouter.runSpeed();
+              bGo = checkStopButton();
+             // btPower.getValue (&bGo);
               
           }
                   
@@ -1097,11 +1107,10 @@
           while (!digitalRead(TOP_SWITCH) && bGo && cBuff == -1)
             {     
               curPos = sRouter.currentPosition() - stepSize;
-              sRouter.move(curPos);
+              sRouter.moveTo(curPos);
               sRouter.setSpeed(-workingMotorSpeed);
-              while (sRouter.currentPosition() != curPos  && workingMotorSpeed > 0 && !digitalRead (TOP_SWITCH))
-                sRouter.runSpeed();
-              
+              while (sRouter.currentPosition() != sRouter.targetPosition()  && workingMotorSpeed > 0 && !digitalRead (TOP_SWITCH))
+                sRouter.runSpeed();             
               cBuff = nexSerial.read();
             
             }
@@ -1110,13 +1119,11 @@
             {
               nexSerial.print("vis pStop,1");              // bring up the Stop sign to help remind we have hit a limit switch
               FlushBuffer();
-              bounceMotorOffLimit (TOP_SWITCH, DOWN, &sRouter ); // 11_20_2022 removed all logic and call function instead
-            } 
-          
-            highLimit = -curPos;
-            nexSerial.print("vis pStop,0");              // bring up the Stop sign to help remind we have hit a limit switch
-            FlushBuffer();
-      
+              bounceMotorOffLimit (TOP_SWITCH, DOWN, &sRouter ); // 11_20_2022 removed all logic and call function instea
+              highLimit = -curPos;
+            }
+          nexSerial.print("vis pStop,0");              // bring up the Stop sign to help remind we have hit a limit switch
+          FlushBuffer();
           setPositionField(1);
         
         }
@@ -1146,10 +1153,10 @@
           while (!digitalRead(BOTTOM_SWITCH) && cBuff == -1 && bGo)
           {
             curPos = sRouter.currentPosition() + stepSize;
-            sRouter.move(curPos);
+            sRouter.moveTo(curPos);
             sRouter.setSpeed(workingMotorSpeed);
         
-            while (sRouter.currentPosition() != curPos  && workingMotorSpeed > 0 && !digitalRead (BOTTOM_SWITCH))
+            while (sRouter.currentPosition() != sRouter.targetPosition()  && workingMotorSpeed > 0 && !digitalRead (BOTTOM_SWITCH))
               sRouter.runSpeed();
             cBuff = nexSerial.read();
           }
@@ -1159,8 +1166,9 @@
               nexSerial.print("vis pStop,1");              // bring up the Stop sign to help remind we have hit a limit switch
               FlushBuffer();
               bounceMotorOffLimit (BOTTOM_SWITCH, UP, &sRouter); // 11_20_2022 removed code, calling function instead
+              lowLimit = -curPos;
             }
-          lowLimit = -curPos;
+          
           nexSerial.print("vis pStop,0");              // bring up the Stop sign to help remind we have hit a limit switch
           FlushBuffer();
           setPositionField(1);
@@ -1207,7 +1215,7 @@
           FlushBuffer();
           bounceMotorOffLimit (FRONT_SWITCH, BACK, &sFence);    // 11_20_2022 -- call function instead of all bouncing logic in code
         }
-      highLimit = -curPos;
+      //highLimit = -curPos;
       nexSerial.print("vis pStop,0");              // bring up the Stop sign to help remind we have hit a limit switch
       FlushBuffer();
       setPositionField(0);
@@ -1253,7 +1261,6 @@
               FlushBuffer();
               bounceMotorOffLimit (BACK_SWITCH, FORWARD, &sFence);   // 11_20_2022 -- call function instead of all bouncing logic in code
             }
-          lowLimit = -curPos;
           nexSerial.print("vis pStop,0");              // bring up the Stop sign to help remind we have hit a limit switch
           FlushBuffer();
           setPositionField(0);
@@ -2166,13 +2173,13 @@
             int   numChars;
             
             char          pinsString[40] = {'\0'};
-            char          motorString[40] = {'\0'};
+       /*     char          motorString[40] = {'\0'};
             char          memFile[30] = {'\0'};
             char          delim[2] = {char(222), '\0'};
             char          delimCheck = char(222);
             char          *token;
             int           index;
-            char          checker;
+            char          checker;*/
             
             nexInit(115200);     //  with enahanced libraries, can pass a baud rate to the Nextion (115200 set on preinitialize of Home)
             //nexBAUD(250000);

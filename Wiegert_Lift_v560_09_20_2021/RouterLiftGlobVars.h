@@ -120,7 +120,7 @@
   *              bDirection ==> which direction should the motor bounce
   *         returns True or false
   ************************************************************************/
-     int bounceMotorOffLimit (int whichLimit, bool bDirection, AccelStepper *whichMotor)
+     void bounceMotorOffLimit (int whichLimit, int bDirection, AccelStepper *whichMotor)
        {
         
          while ( digitalRead(whichLimit) )   //  bounce the screw off the limiter switch
