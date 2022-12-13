@@ -1006,7 +1006,7 @@
           bGo = DOWN;
           incomingByte = nexSerial.read();
 
-          if (incomingByte > -1 )
+          while (incomingByte > -1 )
             {
               if (incomingByte == 101)
                 {
@@ -1018,16 +1018,12 @@
                   (StopButtons[1][0] == screen && StopButtons[1][1] == button) || 
                   (StopButtons[2][0] == screen && StopButtons[2][1] == button) )
                 {
-                  incomingByte = nexSerial.read();   // read the value for the stop button pushed if 1, motors have been stopped
-                  if (incomingByte)
-                    {
-                      bGo = UP;
-                      turnMotorOff(UP);
-                      return bGo;
-                    }
+                  bGo = UP;
+                  turnMotorOff(UP);
+                  return bGo;  
                 }
+              incomingByte = nexSerial.read();
             }
-          while (nexSerial.read() > -1);
           return bGo;
         }
         
