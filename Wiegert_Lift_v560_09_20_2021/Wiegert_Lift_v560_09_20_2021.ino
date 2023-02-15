@@ -75,6 +75,8 @@
   12_07_2022  CDW --  change the limit switches, had to modify loadMemorytoRouter to change the while loops.   Also move to 0 first, then move 
                       to the heights either in the memory or on the presets
   12_11_2022  CDW --  updated bUp and bDown buttons to use moveTo instead of move.
+  02_12_2023  CDW --  fixed bug where the automove button was moving very very slowly.   It may have been because there was a read of the stop
+                      button in the move loop.   replaced the button.betValue with a nexSerial.read(), similar to what is done on the arrow buttons
                       
 
 *****************************************************************************************************************************************************************************/
@@ -1504,6 +1506,7 @@
           byte        gomove;
           float       calcInch;
           int         selection = 0;
+          int         cBuff = -1;       // variable to check whether or not the stop button has been pressed
         
           swHow.getValue(&bHow);
           gomove = bHow;
@@ -1568,12 +1571,13 @@
             }
             if (HOME_MOTOR)
              {
-                while (sRouter.currentPosition() != curPos  && bGo && !digitalRead(TOP_SWITCH) && !digitalRead (BOTTOM_SWITCH))
+                while (sRouter.currentPosition() != curPos  && cBuff == -1 && !digitalRead(TOP_SWITCH) && !digitalRead (BOTTOM_SWITCH))
                   {
                     sRouter.runSpeed();
-                    btPower.getValue(&bGo);
+                    cBuff = nexSerial.read();   // 02_12_2023 -- replaced the button read
                   }
-    
+        
+
                 if (digitalRead(BOTTOM_SWITCH))
                   {
                     nexSerial.print("vis pStop,1");              // bring up the Stop sign to help remind we have hit a limit switch
@@ -1594,10 +1598,10 @@
               }
             else
               {
-                 while (sFence.currentPosition() != curPos  && bGo && digitalRead(FRONT_SWITCH) && digitalRead(BACK_SWITCH))
+                 while (sFence.currentPosition() != curPos  && cBuff == -1 && digitalRead(FRONT_SWITCH) && digitalRead(BACK_SWITCH))
                     {
                       sFence.runSpeed();
-                      btPower.getValue(&bGo);
+                      cBuff = nexSerial.read();     // 02_12_2023 -- replaced the button read
                     }
         
                 if (!digitalRead (BACK_SWITCH) )
