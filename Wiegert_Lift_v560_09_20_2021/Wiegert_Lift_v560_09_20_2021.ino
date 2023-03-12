@@ -77,6 +77,8 @@
   12_11_2022  CDW --  updated bUp and bDown buttons to use moveTo instead of move.
   02_12_2023  CDW --  fixed bug where the automove button was moving very very slowly.   It may have been because there was a read of the stop
                       button in the move loop.   replaced the button.betValue with a nexSerial.read(), similar to what is done on the arrow buttons
+  02_22_2023  CDW --  modified the automated move function to bounceMotorOffLimit, instead of putting logic in function
+  03_10_2023  CDW --  modified setup to chedk if any motor is pegged against a swtich.   If so, run the bounceMotorOffSwitch() to unpeg it
                       
 
 *****************************************************************************************************************************************************************************/
@@ -103,51 +105,14 @@
         int turnMotorOff( int bON)
         {
           char  sCommand[44] = {'\0'};
-          long  offColor = 63488;
-          long  onColor = 34784;
-        
+          
           if (bON == UP)                  // Turn the motor controler off
           {
             digitalWrite ( enablePin, HIGH);
             digitalWrite (fenceEnablePin, HIGH);
-            nexSerial.write (sCommand);
-            FlushBuffer();
-            memset (sCommand, '\0', sizeof(sCommand));
-            sprintf(sCommand, "Home.tPowerStat.txt=\"Lift is OFF\"");
-            nexSerial.write(sCommand);
-            FlushBuffer();
-         
-            memset (sCommand, '\0', sizeof(sCommand));
-            sprintf(sCommand, "Home.tPowerStat.pco=%ld\0", offColor);
-            nexSerial.write(sCommand);
-            FlushBuffer();
-            memset (sCommand, '\0', sizeof(sCommand));
-            sprintf(sCommand, "Memory.tMemPowerStat.txt=\"Lift is OFF\"");
-            nexSerial.write(sCommand);
-            FlushBuffer();
-            memset(sCommand, '\0', sizeof(sCommand));
-            sprintf(sCommand, "Memory.tMemPowerStat.pco=%ld\0", offColor);
-            nexSerial.write(sCommand);
-            FlushBuffer();
-            memset (sCommand, '\0', sizeof(sCommand));
-            sprintf(sCommand,  "Settings.tSettPowerStat.txt=\"Lift is OFF\"");
-            nexSerial.write (sCommand);
-            FlushBuffer();
-            memset (sCommand, '\0', sizeof(sCommand));
-            sprintf(sCommand, "Settings.tSettPowerStat.pco=%ld\0", offColor);
-            nexSerial.write(sCommand);
-            FlushBuffer();
-            memset (sCommand, '\0', sizeof(sCommand));
-            sprintf(sCommand, "Bits.tBitsPower.txt=\"Lift is OFF\"");
-            nexSerial.write(sCommand);
-            FlushBuffer();
-            memset (sCommand, '\0', sizeof(sCommand));
-            sprintf(sCommand, "Bits.tBitsPower.pco=%ld\0",offColor);
-            nexSerial.write(sCommand);
-            FlushBuffer();
-            btPower.setValue(UP);
-            btMemOff.setValue(UP);
-            btSetOff.setValue(UP);
+            //btPower.setValue(UP);
+           // btMemOff.setValue(UP);
+           // btSetOff.setValue(UP);
             digitalWrite (stepPin, LOW);
             digitalWrite (fenceStepPin, LOW);
             bON =  UP;
@@ -156,41 +121,9 @@
           {
             digitalWrite ( enablePin, LOW);
             digitalWrite (fenceEnablePin, LOW);
-            memset (sCommand, '\0', sizeof(sCommand));
-            sprintf(sCommand, "Home.tPowerStat.txt=\"Lift is ON\"");
-            nexSerial.write (sCommand);
-            FlushBuffer();
-            memset (sCommand, '\0', sizeof(sCommand));
-            sprintf(sCommand, "Home.tPowerStat.pco=%ld\0", onColor);
-            nexSerial.write(sCommand);
-            FlushBuffer();
-            memset (sCommand, '\0', sizeof(sCommand));
-            sprintf(sCommand, "Memory.tMemPowerStat.txt=\"Lift is ON\"");  
-            nexSerial.write (sCommand);
-            FlushBuffer();
-            memset (sCommand, '\0', sizeof(sCommand));
-            sprintf(sCommand, "Memory.tMemPowerStat.pco=%ld\0", onColor);
-            nexSerial.write(sCommand);
-            FlushBuffer();
-            memset (sCommand, '\0', sizeof(sCommand));
-            sprintf(sCommand, "Settings.tSettPowerStat.txt=\"Lift is ON\"");
-            nexSerial.write (sCommand);
-            FlushBuffer();
-            memset (sCommand, '\0', sizeof(sCommand));
-            sprintf(sCommand, "Settings.tSettPowerStat.pco=%ld\0", onColor);
-            nexSerial.write(sCommand);
-            FlushBuffer();
-            memset (sCommand, '\0', sizeof(sCommand));
-            sprintf(sCommand, "Bits.tBitsPower.txt=\"Lift is ON\"");
-            nexSerial.write(sCommand);
-            FlushBuffer();
-            memset (sCommand, '\0', sizeof(sCommand));
-            sprintf(sCommand, "Bits.tBitsPower.pco=%ld\0", onColor);
-            nexSerial.write(sCommand);
-            FlushBuffer();
-            btPower.setValue(DOWN);
-            btMemOff.setValue(DOWN);
-            btSetOff.setValue(DOWN);
+            //btPower.setValue(DOWN);
+            //btMemOff.setValue(DOWN);
+            //btSetOff.setValue(DOWN);
             digitalWrite (stepPin, HIGH);
             digitalWrite (fenceStepPin, HIGH);
             bON = DOWN;
@@ -691,15 +624,6 @@
           workingMotorSpeed = perCalc;
         
         }
-/***************************************
-    void Flushbuffer()
-        when serial write to the Nextion, need to send final command
- ***********************************/
-        void FlushBuffer() {
-          nexSerial.write(0xff);
-          nexSerial.write(0xff);
-          nexSerial.write(0xff);
-        }
         
 /*************************************************
     void  deleteFromMemory( int memrow)
@@ -780,18 +704,21 @@
               nexSerial.print("vis pStop,1");              // bring up the Stop sign to help remind we have hit a limit switch
               FlushBuffer();
               
-              if (digitalRead(TOP_SWITCH))
+              if (digitalRead(TOP_SWITCH))      // 02_22_2023 changed the logic here to call bounceMotorOffLimit
                 {
-                  sRouter.moveTo( sRouter.currentPosition() + 600); 
-                  sRouter.setSpeed (workingMotorSpeed);
+                  bounceMotorOffLimit (TOP_SWITCH, DOWN, &sRouter);
+                  //sRouter.moveTo( sRouter.currentPosition() + 600); 
+                  //sRouter.setSpeed (workingMotorSpeed);
                 }
               else
                 {
-                  sRouter.moveTo(sRouter.currentPosition() - 600); 
-                  sRouter.setSpeed(-workingMotorSpeed);
+                  bounceMotorOffLimit (BOTTOM_SWITCH, UP, &sRouter);
+                  
+                  //sRouter.moveTo(sRouter.currentPosition() - 600); 
+                  //sRouter.setSpeed(-workingMotorSpeed);
                 }
-              while (sRouter.currentPosition() != sRouter.targetPosition())
-                sRouter.runSpeed();
+              //while (sRouter.currentPosition() != sRouter.targetPosition())       // 02_22_2023  commented out because of bounceMotorOffLimit
+              //  sRouter.runSpeed();
               bGo = UP;
             }
           nexSerial.print("vis pStop,0");              // bring up the Stop sign to help remind we have hit a limit switch
@@ -2333,6 +2260,21 @@
             cbPreSetsPopCallBack(&cbPreSets);                         // if there is a value in the presets, we need to initialize the preSets variables
             hMoveSpeedPopCallback(&hMoveSpeed);                       // if there is a value for the slider, set the variables in this program    
             
+  // 03_10_2023 -- CDW added the checks for the router or fence being pegged on startup
+
+            if (digitalRead(TOP_SWITCH || digitalRead (BOTTOM_SWITCH)))
+              if (digitalRead(TOP_SWITCH))
+                bounceMotorOffLimit (TOP_SWITCH, DOWN, &sRouter );    
+              else
+                bounceMotorOffLimit (BOTOM_SWITCH, UP, &sRouter ); 
+            if (digitalRead (BACK_SWITCH) || digitalRead (FRONT_SWITCH))
+              if (digitalRead(BACK_SWITCH))
+                bounceMotorOffLimit (BACK_SWITCH, FORWARD, &sFence);   
+              else
+                bounceMotorOffLimit (FRONT_SWITCH, BACK, &sFence);   
+              
+              
+
             setPositionField(1);
             setPositionField(0);
             Home.show();
@@ -2343,6 +2285,6 @@
  ***********************************************/
         void loop(void) {
           
-          nexLoop(nex_listen_list);
+            nexLoop(nex_listen_list);
 
         }

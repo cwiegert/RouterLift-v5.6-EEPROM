@@ -141,3 +141,13 @@
                 whichMotor->runSpeed();
           }
         }
+/***************************************
+    void Flushbuffer()
+        when serial write to the Nextion, need to send final command
+ ***********************************/
+    void FlushBuffer() 
+      {
+          nexSerial.write(0xff);
+          nexSerial.write(0xff);
+          nexSerial.write(0xff);
+      }
