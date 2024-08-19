@@ -2,7 +2,7 @@
 *Arduino automated lift and fence*
 
 #### v. 5.6.0 #### 
-added the [EEPROM](https://github.com/cwiegert/RouterLift-v5.6-EEPROM/tree/main/EEPROM_Writer_Router) configuration tool to set the LiftPins.cfg parameters.   All the parameters are hardcoded in routerliftglobals.h and are writted to EEPROM.  Instead of the code having to read the SD card to start up - all the settings are stored to to the EEPROM and read at startup.    To change the pin configuration - go to the Settings screen, change a pin parameter, save it, and reconfigure the wires to the new pin configuration.   If no hardware is required, for instance, maxRouterSpeed, just reset the board to re-read the system config.
+added the [EEPROM](https://github.com/cwiegert/RouterLift-v5.6-EEPROM/tree/main/EEPROM_Writer_Router) configuration tool to set the LiftPins.cfg parameters.   All the parameters are hardcoded in routerliftglobals.h and are written to EEPROM.  Instead of the code having to read the SD card to start up - all the settings are stored to to the EEPROM and read at startup.    To change the pin configuration - go to the Settings screen, change a pin parameter, save it, and reconfigure the wires to the new pin configuration.   If no hardware is required, for instance, maxRouterSpeed, just reset the board to re-read the system config.
 
 
 
