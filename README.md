@@ -5,6 +5,26 @@
 added the [EEPROM](https://github.com/cwiegert/RouterLift-v5.6-EEPROM/tree/main/EEPROM_Writer_Router) configuration tool to set the LiftPins.cfg parameters.   All the parameters are hardcoded in routerliftglobals.h and are written to EEPROM.  Instead of the code having to read the SD card to start up - all the settings are stored to to the EEPROM and read at startup.    To change the pin configuration - go to the Settings screen, change a pin parameter, save it, and reconfigure the wires to the new pin configuration.   If no hardware is required, for instance, maxRouterSpeed, just reset the board to re-read the system config.
 
 
+#### v. 5.6.1 ####
+*Setup has changed since 5.6.0 — please read this before you build.*
+
+**The Nextion library now ships inside this repo.**  Don't download it from ITEADLIB any more.  It lives in `libraries/ITEADLIB_Arduino_Nextion` and it has been **modified** — the stock ITEAD library will not compile this code.  Two changes matter to you:
+
+* `nexInit()` now takes a baud rate.  The sketch calls `nexInit(115200)`; the stock library only starts the panel at 9600.
+* `nexSerial` in `NexConfig.h` decides which hardware serial port talks to the display.  **You have to set this to match your own wiring** before the panel will respond.  Getting it wrong gives you a dead display and no error message, so check it first if the screen stays blank.
+
+I also pulled `NexUpload` out of the library.  Nothing in this project uses it, and it dragged in the SD library behind the scenes.
+
+**Memory.**  Global variables were using 73% of the Mega's 8K of RAM, which left very little room for the stack.  Moving the message-formatting strings into program flash and dropping that unused SD library brought it down to 54%.  If you've seen odd behaviour that you couldn't pin down or reproduce, this is worth picking up.
+
+**The sketch folder is cleaned up.**  Two stale sync-conflict files had been sitting alongside the main sketch.  The Arduino build compiles *every* `.ino` file in a sketch folder, so those two broke the build for anyone who cloned the repo.  They're gone.
+
+**You no longer need the Arduino IDE.**  The code builds cleanly with `arduino-cli` and the VS Code Arduino extension as well as in the IDE.  Board is `arduino:avr:mega`, processor ATmega2560.  The IDE still works exactly as described below if that's what you prefer.
+
+**Two HMI designs.**  The sketch folder now holds both `Wiegert_Lift_v560_09_20_2021.HMI` and `Wiegert_Lift_v560_09_20_2026.HMI`.  Load the one that matches the code you're running — the Settings page components were renumbered, and the button IDs in the HMI have to line up with the ones in `RouterLiftNextionObjects.h`.  If buttons trigger the wrong action, that mismatch is why.
+
+**About the branches.**  `main` is where this work lives, because it's the version I intend people to build from.  Day-to-day changes happen on a working branch and only come across to `main` once they've run on my own machine.  The previous production state is kept on its own branch if you need to get back to it.  Nothing on `main` is removed by this — it's added on top.
+
 
 ## The Why: ##  
 I got bored, had a 12 yr old daughter who was learning C and wanted to investigate robots and a close friend told me of a colleague who had a router lift that could be as precise as 1/100” on his router table.   
@@ -121,7 +141,7 @@ Wiring the limit switches.   Ground --> common on the switch.   3V --> 10K resis
 14.	Connect the stepper motors to your stepper motor controllers.   Typically, your motors are wired in pairs with the Blue and Red as 1 pair and Black and Green being the other pair.   Here is an example wiring he TB6600 controller.  
 15.	Install the Arduino IDE on the laptop or computer you will use to upload the Arduino code to the Mega2560 Board
 16.	You will need the AcellStepper Arduino library.   In the Arduino IDE, click Tools --> Manage Libraries   Once the dialog pops up, type “Accel” in the search box and scoll the results until you find    and install the library.
-17.	Copy the Nextion libraries to your Arduino working directory.   You can get them from [ITEADLIB](https://github.com/itead/ITEADLIB_Arduino_Nextion)    Add the library to your Arduino IDE by clicking Sketch --> Include Library --> Add Zip library.    Select the Nextion library you downloaded 
+17.	The Nextion library ships with this repo, in `libraries/ITEADLIB_Arduino_Nextion`.  **Do not download it from ITEADLIB** — this copy is modified and the stock one will not compile.  Copy that folder into your Arduino libraries directory (`~/Documents/Arduino/libraries` on a Mac, `Documents\Arduino\libraries` on Windows).  Then open `NexConfig.h` and set `nexSerial` to the serial port your panel is actually wired to, matching step 13.  This is the single most common reason for a screen that powers up but never responds.
 18.	Add the SDFat Library by clicking Tools --> Manage Libraries    Search for SDFat, scroll the results until you find   and click Install
 19.	If you have the system all wired up, it’s time to load the Arduino with the software.  
 20.	Connect the Ardunio to you computer through the USB coard
