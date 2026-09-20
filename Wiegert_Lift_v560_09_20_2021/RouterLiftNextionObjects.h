@@ -33,8 +33,8 @@
         NexDSButton swFence =        NexDSButton(0, 39, "swFence");             //  Switch to set global for setting which motor to run   router/Fence
         NexButton   bDown =          NexButton (1, 1, "Settings.bDown");        //  move down button on Settings Page
         NexButton   bUp =            NexButton (1, 2, "Settings.bUp");          //  move up on the Settings page
-        NexButton   bSetForward =    NexButton (1, 48, "Settings.bSetForward");
-        NexButton   bSetBack =       NexButton (1, 47, "Settings.bSetBack");
+        NexButton   bSetForward =    NexButton (1, 47, "Settings.bSetForward");
+        NexButton   bSetBack =       NexButton (1, 46, "Settings.bSetBack");
         NexButton   bLiftBit =       NexButton (1, 3, "bLiftBit");              //  the change bit button on the Settings page.
         NexButton   bZero =          NexButton (1, 5, "bZero");                 //  rezero button on the Settings Page
         NexButton   swDirect =       NexButton (1, 7, "swDirect");             //  Direction button on the Settings Screen
@@ -46,13 +46,12 @@
         NexText     tMaxSpeed =      NexText (1, 16, "tMaxSpeed");              //  field to configure the max lift speed, will reset the top of the slider
         NexText     tWorkSpeed =     NexText (1, 19, "tWorkSpeed");             //  field to configure working speed, will set the slider
         NexText     tStepSize =      NexText (1, 21, "tStepSize");              //  field to configure stepSize - will control speed 
-        NexDSButton swWhich =        NexDSButton(1, 51, "swWhich");             //  toggle switch on the Settings screen to direct which motor is to be used for functions
+        NexDSButton swWhich =        NexDSButton(1, 50, "swWhich");             //  toggle switch on the Settings screen to direct which motor is to be used for functions
         NexText     tFileName =      NexText(1, 37, "Settings.tFileName");      //  field to hold the SD card file name to read and write to
-        NexText     tVersion =       NexText(1, 42, "Settings.tVersion");       //  field to hold the version of the application and code
-        NexButton   bSetPins =       NexButton (1, 38, "bSetPins");             //  Button to download the pins to the arduino and restart
-        NexButton   bSetMotor =      NexButton (1, 40, "bSetMotor");            //  Button to download new settings for max, working speeds and step size3
-        NexButton   bSaveFile =      NexButton (1, 41, "bSaveFile");            //  resets the configuration file, changes the Memory file name in configPins.cfg set up file
-        NexDSButton swFenceDir =     NexDSButton (1, 52, "swFenceDir");          //  switch to set which way to zero the fence.  if Forward, come from the back, if Back, start in front
+        NexText     tVersion =       NexText(1, 41, "Settings.tVersion");       //  field to hold the version of the application and code
+        NexButton   bSetMotor =      NexButton (1, 39, "bSetMotor");            //  Button to download new settings for max, working speeds and step size3
+        NexButton   bSaveFile =      NexButton (1, 40, "bSaveFile");            //  resets the configuration file, changes the Memory file name in configPins.cfg set up file
+        NexDSButton swFenceDir =     NexDSButton (1, 51, "swFenceDir");          //  switch to set which way to zero the fence.  if Forward, come from the back, if Back, start in front
         NexButton   bSDCard   =      NexButton(2, 58, "bSDCard");               //  button to reset the SD card reader if the card has been pulled and reinserted
         NexButton   bMemZero =       NexButton (2, 62, "bMemZer0");             //  Drops the router bit back to the 0 position, at max speed
         /**************************************************************
@@ -164,7 +163,6 @@
           &bBottomOut,
           &hMoveSpeed,
           &btSetOff,
-          &bSetPins,
           &bSetMotor,
           &bSetForward,
           &bSetBack,

@@ -1,3 +1,4 @@
+#include <Nextion.h>          // FlushBuffer() below uses nexSerial
 #define DEBUG 0
 #define UP 0
 #define DOWN 1

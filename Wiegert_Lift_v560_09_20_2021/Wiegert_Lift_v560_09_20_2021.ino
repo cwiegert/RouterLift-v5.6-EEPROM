@@ -79,6 +79,8 @@
                       button in the move loop.   replaced the button.betValue with a nexSerial.read(), similar to what is done on the arrow buttons
   02_22_2023  CDW --  modified the automated move function to bounceMotorOffLimit, instead of putting logic in function
   03_10_2023  CDW --  modified setup to chedk if any motor is pegged against a swtich.   If so, run the bounceMotorOffSwitch() to unpeg it
+  09_20_2025  CDW --  reset the environment on the MAC, testing any code readiness to load final working code
+                      modified the HMI to pull a useless button, and change background colors.  
                       
 
 *****************************************************************************************************************************************************************************/
@@ -148,56 +150,56 @@
           int     i = 0;
         
           memset(tempWriter, '\0', sizeof(tempWriter));
-          sprintf(tempWriter, "Settings.tUpVal.txt=\"%d\"\0", TOP_SWITCH);
+          sprintf_P(tempWriter, PSTR("Settings.tUpVal.txt=\"%d\""), TOP_SWITCH);
           nexSerial.write(tempWriter);
           FlushBuffer();
-          sprintf(tempWriter, "Settings.tDownVal.txt=\"%d\"\0", BOTTOM_SWITCH);
+          sprintf_P(tempWriter, PSTR("Settings.tDownVal.txt=\"%d\""), BOTTOM_SWITCH);
           nexSerial.write(tempWriter);
           FlushBuffer();
-          sprintf(tempWriter, "Settings.tZeroPin.txt=\"%d\"\0", REZERO);
+          sprintf_P(tempWriter, PSTR("Settings.tZeroPin.txt=\"%d\""), REZERO);
           nexSerial.write(tempWriter);
           FlushBuffer();
-          sprintf(tempWriter, "Settings.tStepPin.txt=\"%d\"\0", stepPin);
+          sprintf_P(tempWriter, PSTR("Settings.tStepPin.txt=\"%d\""), stepPin);
           nexSerial.write(tempWriter);
           FlushBuffer();
-          sprintf(tempWriter, "Settings.tSDPin.txt=\"%d\"\0", SD_WRITE);
+          sprintf_P(tempWriter, PSTR("Settings.tSDPin.txt=\"%d\""), SD_WRITE);
           nexSerial.write(tempWriter);
           FlushBuffer();
-          sprintf(tempWriter, "Settings.tEnablePin.txt=\"%d\"\0", enablePin);
+          sprintf_P(tempWriter, PSTR("Settings.tEnablePin.txt=\"%d\""), enablePin);
           nexSerial.write(tempWriter);
           FlushBuffer();
-          sprintf(tempWriter, "Settings.tDirectionPin.txt=\"%d\"\0", directionPin);
+          sprintf_P(tempWriter, PSTR("Settings.tDirectionPin.txt=\"%d\""), directionPin);
           nexSerial.write(tempWriter);
           FlushBuffer();
-          sprintf(tempWriter, "Settings.tMaxSpeed.txt=\"%ld\"\0", maxMotorSpeed);
+          sprintf_P(tempWriter, PSTR("Settings.tMaxSpeed.txt=\"%ld\""), maxMotorSpeed);
           nexSerial.write(tempWriter);
           FlushBuffer();
-          sprintf(tempWriter, "Settings.tWorkSpeed.txt=\"%ld\"\0", workingMotorSpeed);
+          sprintf_P(tempWriter, PSTR("Settings.tWorkSpeed.txt=\"%ld\""), workingMotorSpeed);
           nexSerial.write(tempWriter);
           FlushBuffer();
-          sprintf(tempWriter, "Settings.tStepSize.txt=\"%d\"\0", stepSize);
+          sprintf_P(tempWriter, PSTR("Settings.tStepSize.txt=\"%d\""), stepSize);
           nexSerial.write(tempWriter);
           FlushBuffer();
-          sprintf(tempWriter, "Settings.tFStep.txt=\"%d\"\0", fenceStepPin);
+          sprintf_P(tempWriter, PSTR("Settings.tFStep.txt=\"%d\""), fenceStepPin);
           nexSerial.write(tempWriter);
           FlushBuffer();
-          sprintf(tempWriter, "Settings.tFEnable.txt=\"%d\"\0", fenceEnablePin);
+          sprintf_P(tempWriter, PSTR("Settings.tFEnable.txt=\"%d\""), fenceEnablePin);
           nexSerial.write(tempWriter);
           FlushBuffer();
-          sprintf(tempWriter, "Settings.tFDir.txt=\"%d\"\0", fenceDirPin);
+          sprintf_P(tempWriter, PSTR("Settings.tFDir.txt=\"%d\""), fenceDirPin);
           nexSerial.write(tempWriter);
           FlushBuffer();
-          sprintf(tempWriter, "Settings.tBackSW.txt=\"%d\"\0", BACK_SWITCH);
+          sprintf_P(tempWriter, PSTR("Settings.tBackSW.txt=\"%d\""), BACK_SWITCH);
           nexSerial.write(tempWriter);
           FlushBuffer();
-          sprintf(tempWriter, "Settings.tFSW.txt=\"%d\"\0", FRONT_SWITCH);
+          sprintf_P(tempWriter, PSTR("Settings.tFSW.txt=\"%d\""), FRONT_SWITCH);
           nexSerial.write(tempWriter);
           FlushBuffer();
-          sprintf(tempWriter, "Settings.tFZero.txt=\"%d\"\0", FENCE_ZERO);
+          sprintf_P(tempWriter, PSTR("Settings.tFZero.txt=\"%d\""), FENCE_ZERO);
           nexSerial.write(tempWriter);
           FlushBuffer();
 
-          sprintf(tempWriter, "Settings.tFileName.txt=\"%s\"\0", storeFile);
+          sprintf_P(tempWriter, PSTR("Settings.tFileName.txt=\"%s\""), storeFile);
           nexSerial.write(tempWriter);
           FlushBuffer();
           memset (tempWriter, '\0', sizeof(tempWriter));
@@ -303,20 +305,20 @@
           FlushBuffer();   
           if (strlen(bYesLbl) > 0)
           {
-            sprintf(msgCommand, "Error.bYes.txt=\"%s\"", bYesLbl);
+            sprintf_P(msgCommand, PSTR("Error.bYes.txt=\"%s\""), bYesLbl);
             nexSerial.write(msgCommand);
             FlushBuffer();
           }
         
           if (strlen(bNoLbl) > 0)
           {
-            sprintf(msgCommand, "Error.bNo.txt=\"%s\"", bNoLbl);
+            sprintf_P(msgCommand, PSTR("Error.bNo.txt=\"%s\""), bNoLbl);
         
             nexSerial.write(msgCommand);
             FlushBuffer();
           }      
          
-          sprintf(msgCommand,"Error.tErrorHead.txt=\"%s\"", errorTitle);
+          sprintf_P(msgCommand, PSTR("Error.tErrorHead.txt=\"%s\""), errorTitle);
           nexSerial.write(msgCommand);
           FlushBuffer();
           memset (msgCommand, '\0', sizeof(msgCommand));
@@ -329,7 +331,7 @@
                   switch (i)
                     {
                       case 0:
-                        sprintf (errText1, "%s",token);
+                        sprintf_P(errText1, PSTR("%s"),token);
                         break;
                       case 1:
                         strcpy (errText2, token);
@@ -356,23 +358,23 @@
           switch (p)
             {
               case 0:
-                sprintf(msgCommand, "Error.tErrorMsg.txt=\"%s\"", errorText);
+                sprintf_P(msgCommand, PSTR("Error.tErrorMsg.txt=\"%s\""), errorText);
                 break;
               case 1:
-                sprintf(msgCommand, "Error.tErrorMsg.txt=\"%s\r\n%s\"", errText1, errText2);
+                sprintf_P(msgCommand, PSTR("Error.tErrorMsg.txt=\"%s\r\n%s\""), errText1, errText2);
                 break;
               case 2:
-                sprintf(msgCommand, "Error.tErrorMsg.txt=\"%s\r\n%s\r\n%s\"", errText1, errText2, errText3);
+                sprintf_P(msgCommand, PSTR("Error.tErrorMsg.txt=\"%s\r\n%s\r\n%s\""), errText1, errText2, errText3);
                 break;
               case 3:
-                sprintf(msgCommand, "Error.tErrorMsg.txt=\"%s\r\n%s\r\n%s\r\n\%s\"", errText1, errText2, errText3, errText4);
+                sprintf_P(msgCommand, PSTR("Error.tErrorMsg.txt=\"%s\r\n%s\r\n%s\r\n\%s\""), errText1, errText2, errText3, errText4);
                 break;
               case 4:
-                sprintf(msgCommand, "Error.tErrorMsg.txt=\"%s\r\n%s\r\n%s\r\n\%s\r\n%s\"", errText1, errText2, errText3, errText4, errText5);
+                sprintf_P(msgCommand, PSTR("Error.tErrorMsg.txt=\"%s\r\n%s\r\n%s\r\n\%s\r\n%s\""), errText1, errText2, errText3, errText4, errText5);
                 break;
               
             } 
-    //      sprintf(msgCommand, "Error.tErrorMsg.txt=\"%s\"", errorText);
+    //      sprintf_P(msgCommand, PSTR("Error.tErrorMsg.txt=\"%s\""), errorText);
           nexSerial.write(msgCommand);
           FlushBuffer();
  
@@ -388,9 +390,9 @@
             serRead[i] = nexSerial.read();
           memset (msgCommand, '\0', sizeof(msgCommand));
           if (serRead[2] == 4)
-            sprintf(msgCommand, "page %s", yesScreen);
+            sprintf_P(msgCommand, PSTR("page %s"), yesScreen);
           else if (serRead[2] == 5)
-            sprintf(msgCommand, "page %s", noScreen);
+            sprintf_P(msgCommand, PSTR("page %s"), noScreen);
           nexSerial.write (msgCommand);
           FlushBuffer();
           return serRead[2];
@@ -468,32 +470,32 @@
             strcpy(buffer, "0.00");
          if (bMotor == 1)
             {
-              sprintf(sCommand, "Home.tPosition.txt=\"%s\"", buffer);
+              sprintf_P(sCommand, PSTR("Home.tPosition.txt=\"%s\""), buffer);
               nexSerial.write(sCommand);
               FlushBuffer();
-              sprintf(sCommand, "Settings.tSetPosit.txt=\"%s\"", buffer);
+              sprintf_P(sCommand, PSTR("Settings.tSetPosit.txt=\"%s\""), buffer);
               nexSerial.write(sCommand);
               FlushBuffer();
-              sprintf(sCommand, "Bits.tBitsPos.txt=\"%s\"", buffer);
+              sprintf_P(sCommand, PSTR("Bits.tBitsPos.txt=\"%s\""), buffer);
               nexSerial.write(sCommand);
               FlushBuffer();
-              sprintf(sCommand, "Memory.tMemPosit.txt=\"%s\"", buffer);
+              sprintf_P(sCommand, PSTR("Memory.tMemPosit.txt=\"%s\""), buffer);
               nexSerial.write(sCommand);
               FlushBuffer();
             }
           else
             {
             
-              sprintf(sCommand, "Settings.tFencePos.txt=\"%s\"", buffer);
+              sprintf_P(sCommand, PSTR("Settings.tFencePos.txt=\"%s\""), buffer);
               nexSerial.write(sCommand);
               FlushBuffer();
-              sprintf(sCommand, "Memory.tFencePos.txt=\"%s\"", buffer);
+              sprintf_P(sCommand, PSTR("Memory.tFencePos.txt=\"%s\""), buffer);
               nexSerial.write(sCommand);
               FlushBuffer();
-              sprintf(sCommand, "Bits.tFencePos.txt=\"%s\"", buffer);
+              sprintf_P(sCommand, PSTR("Bits.tFencePos.txt=\"%s\""), buffer);
               nexSerial.write(sCommand);
               FlushBuffer();
-              sprintf(sCommand, "Home.tFencePos.txt=\"%s\"", buffer);
+              sprintf_P(sCommand, PSTR("Home.tFencePos.txt=\"%s\""), buffer);
               nexSerial.write(sCommand);
               FlushBuffer();
               
@@ -554,7 +556,7 @@
   
          if (DEBUG)
            {
-              debugLn("_________________________________________________________________________________________________________________________");
+              debugLn(F("\r\n========\r\n"));
               debug (F("directionPin ==> "));
               debugLn(byte(directionPin));
               debug (F("fenceDirPin ==> "));
@@ -617,7 +619,7 @@
           }
           hMoveSpeed.setValue(perCalc);
           nSetSpeed.setValue(perCalc);
-          sprintf(serCommand, "Settings.tWorkSpeed.txt=\"%ld\"\0", perCalc);
+          sprintf_P(serCommand, PSTR("Settings.tWorkSpeed.txt=\"%ld\""), perCalc);
         
           nexSerial.write(serCommand);
           FlushBuffer();
@@ -751,7 +753,7 @@
         {
           inches = (atof(thickness)/2) + preSetLookup.decimal;
           dtostrf(inches, 3, 4, newThick);
-          sprintf(sCommand, "t3.txt=\"%s\"",newThick);
+          sprintf_P(sCommand, PSTR("t3.txt=\"%s\""),newThick);
           nexSerial.write(sCommand);
           FlushBuffer();
           memset (buffer, '\0', sizeof(buffer));
@@ -759,7 +761,7 @@
         } 
       loadMemorytoRouter (t3, LOW); 
       memset (buffer, '\0', sizeof(buffer));
-      sprintf(sCommand, "t1.txt=\"%s\"", preSetLookup.label);
+      sprintf_P(sCommand, PSTR("t1.txt=\"%s\""), preSetLookup.label);
       nexSerial.write(sCommand);
       FlushBuffer();
           
@@ -867,7 +869,7 @@
               {
                 token = strtok(writeS, delimeter);            // tokenize the line and split out the appropriate fields from the string
              
-                strcpy(memory[index].delimeter, char(token));
+//                strcpy(memory[index].delimeter, char(token)); 
                 element = 1;
                 while (token != NULL)
                 {
@@ -882,17 +884,17 @@
                       element++;
                       break;
                     case 2:
-                      sprintf(memory[index].Name, "%s", token);
+                      sprintf_P(memory[index].Name, PSTR("%s"), token);
                       if (memory[index].Name[0] == '\n')
                         memory[index].Name[0] = '\0';
                       element++;
                       break;
                     case 3:
-                      sprintf(memory[index].inches, "%s", token);
+                      sprintf_P(memory[index].inches, PSTR("%s"), token);
                       element++;
                       break;
                     case 4:
-                      sprintf(memory[index].steps, "%s", token);
+                      sprintf_P(memory[index].steps, PSTR("%s"), token);
                       element++;
                       break;
                     case 5:
@@ -1859,7 +1861,7 @@
               fSave.fgets(temp, sizeof(temp));                      // read the version configuration line
               fWrite.seekSet(filePos);
           
-              sprintf(newFile, "%c%s%c\n", char(138), storeFile, char(138));
+              sprintf_P(newFile, PSTR("%c%s%c\n"), char(138), storeFile, char(138));
               fWrite.write(newFile);
               fWrite.write(temp);                                   // write version back into config file
               numChars = strlen(oldFileName) - strlen(storeFile);    // if the file name is shorter, clean out the remaining letters
@@ -1892,7 +1894,7 @@
               fWrite.write('\n');
               for (int index=1; index <= 7; index++)
                 {
-                  sprintf(temp, ",#,%d,,,,\n",index);
+                  sprintf_P(temp, PSTR(",#,%d,,,,\n"),index);
                   fWrite.write(temp);
                 }
               fWrite.sync();
@@ -2059,7 +2061,7 @@
             stepsFromDistance (LOW, index);
             if (preSetLookup.decimal != 0)
               {
-                sprintf( sCommand, "t2.txt=\"%s\"",preSetLookup.label);
+                sprintf_P(sCommand, PSTR("t2.txt=\"%s\""),preSetLookup.label);
                 nexSerial.write(sCommand);
                 FlushBuffer(); 
                 dtostrf(preSetLookup.decimal, 3, 4, inches);       
@@ -2068,7 +2070,7 @@
               }
             else
               {
-                sprintf( sCommand, "t2.txt=\"ERROR\"");
+                sprintf_P(sCommand, PSTR("t2.txt=\"ERROR\""));
                 nexSerial.write(sCommand);
                 FlushBuffer(); 
 
@@ -2262,11 +2264,11 @@
             
   // 03_10_2023 -- CDW added the checks for the router or fence being pegged on startup
 
-            if (digitalRead(TOP_SWITCH || digitalRead (BOTTOM_SWITCH)))
+            if (digitalRead(TOP_SWITCH) || digitalRead (BOTTOM_SWITCH))
               if (digitalRead(TOP_SWITCH))
                 bounceMotorOffLimit (TOP_SWITCH, DOWN, &sRouter );    
               else
-                bounceMotorOffLimit (BOTOM_SWITCH, UP, &sRouter ); 
+                bounceMotorOffLimit (BOTTOM_SWITCH, UP, &sRouter ); 
             if (digitalRead (BACK_SWITCH) || digitalRead (FRONT_SWITCH))
               if (digitalRead(BACK_SWITCH))
                 bounceMotorOffLimit (BACK_SWITCH, FORWARD, &sFence);   
